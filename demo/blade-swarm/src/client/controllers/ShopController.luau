@@ -130,7 +130,7 @@ local function makeCard(index: number)
 		FontFace = Theme.Fonts.Title,
 		TextScaled = true,
 		TextColor3 = Color3.fromHex("2b1d00"),
-		Text = "🪙 0",
+		Text = "0 coins",
 	}, card)
 	Theme.corner(buy, 12)
 	Theme.textSizeLimit(buy, 12, 26)
@@ -211,7 +211,7 @@ local function updateCard(index: number)
 	card.sold.Visible = offer.sold
 
 	local affordable = canAfford(offer.price)
-	card.buy.Text = "🪙 " .. MathUtil.formatNumber(offer.price)
+	card.buy.Text = MathUtil.formatNumber(offer.price) .. " coins"
 	card.buy.Active = affordable and not offer.sold
 	card.buy.BackgroundColor3 = if affordable then colors.Gold else Color3.fromHex("4b5263")
 	card.buy.TextColor3 = if affordable then Color3.fromHex("2b1d00") else colors.TextDim
@@ -220,7 +220,7 @@ end
 
 local function updateButtons()
 	local canReroll = not ready and canAfford(rerollCost)
-	rerollButton.Text = "🎲 Reroll  🪙 " .. rerollCost
+	rerollButton.Text = "🎲 Reroll (" .. rerollCost .. ")"
 	rerollButton.BackgroundColor3 = if canReroll then colors.Accent else Color3.fromHex("4b5263")
 	rerollButton.TextColor3 = if canReroll then Color3.fromHex("032a31") else colors.TextDim
 
@@ -228,7 +228,7 @@ local function updateButtons()
 	readyButton.BackgroundColor3 = if ready then Color3.fromHex("4b5263") else colors.Good
 	readyButton.TextColor3 = if ready then colors.TextDim else Color3.fromHex("032a1c")
 
-	coinsLabel.Text = "🪙 " .. MathUtil.formatNumber(coins)
+	coinsLabel.Text = MathUtil.formatNumber(coins) .. " coins"
 end
 
 local function render()
@@ -401,7 +401,7 @@ local function build()
 		Position = UDim2.fromScale(0.5, 0.95),
 		Size = UDim2.fromScale(0.26, 0.11),
 		FontFace = Theme.Fonts.Title,
-		Text = "🪙 0",
+		Text = "0 coins",
 		TextColor3 = colors.Gold,
 		TextScaled = true,
 	})

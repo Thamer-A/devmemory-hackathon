@@ -184,7 +184,7 @@ end
 local function onZombieKilled(position: Vector3, coins: number, killerUserId: number)
 	burst(position + Vector3.new(0, 1.5, 0))
 	if killerUserId == localPlayer.UserId and coins > 0 then
-		floatText(position + Vector3.new(0, 4, 0), "+" .. coins .. " 🪙", colors.Gold, 1.3, COIN_RISE, COIN_DURATION)
+		floatText(position + Vector3.new(0, 4, 0), "+" .. coins .. " coins", colors.Gold, 1.3, COIN_RISE, COIN_DURATION)
 	end
 end
 

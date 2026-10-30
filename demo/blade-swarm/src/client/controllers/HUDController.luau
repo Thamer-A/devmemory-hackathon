@@ -79,6 +79,7 @@ local healthFill: Frame
 local healthLabel: TextLabel
 local bannerLabel: TextLabel
 local bannerStroke: UIStroke
+local subStroke: UIStroke
 local bannerScale: UIScale
 local subLabel: TextLabel
 local chips = {}
@@ -165,18 +166,31 @@ end
 local function buildCoins()
 	coinPanel = Theme.panel(gui, {
 		Name = "Coins",
-		Position = UDim2.new(0, 16, 0, 12),
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -16, 0, 12),
 		Size = UDim2.fromScale(0.13, 0.065),
 	})
 	Theme.new("UISizeConstraint", { MinSize = Vector2.new(120, 38), MaxSize = Vector2.new(210, 54) }, coinPanel)
 	Theme.corner(coinPanel, 24)
 	Theme.stroke(coinPanel, colors.Gold, 1.5, 0.6)
 
+	-- drawn coin icon (the coin emoji does not render in Roblox's font)
+	local coin = Theme.new("Frame", {
+		Name = "CoinIcon",
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 10, 0.5, 0),
+		Size = UDim2.fromScale(0.62, 0.62),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundColor3 = colors.Gold,
+	}, coinPanel)
+	Theme.corner(coin, 999)
+	Theme.new("UIStroke", { Color = Color3.fromRGB(176, 120, 20), Thickness = 2 }, coin)
+
 	coinLabel = Theme.label(coinPanel, {
-		Size = UDim2.new(1, -24, 0.8, 0),
-		Position = UDim2.new(0, 12, 0.1, 0),
+		Size = UDim2.new(1, -54, 0.8, 0),
+		Position = UDim2.new(0, 44, 0.1, 0),
 		FontFace = Theme.Fonts.Title,
-		Text = "🪙 0",
+		Text = "0",
 		TextColor3 = colors.Gold,
 		TextScaled = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -304,7 +318,8 @@ local function buildBanner()
 		ZIndex = 5,
 	})
 	Theme.textSizeLimit(subLabel, 12, 28)
-	Theme.new("UIStroke", { Color = Color3.new(0, 0, 0), Thickness = 2, Transparency = 0.5 }, subLabel)
+	-- the outline must fade with the text, otherwise a black outline-only ghost stays on screen
+	subStroke = Theme.new("UIStroke", { Color = Color3.new(0, 0, 0), Thickness = 2, Transparency = 1 }, subLabel)
 end
 
 -- Behaviour ----------------------------------------------------------------
@@ -320,12 +335,14 @@ local function showBanner(text: string, color: Color3, sub: string?)
 	bannerScale.Scale = 0.5
 	subLabel.Text = sub or ""
 	subLabel.TextTransparency = 1
+	subStroke.Transparency = 1
 
 	Theme.tween(bannerScale, 0.45, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Theme.tween(bannerLabel, 0.2, { TextTransparency = 0 })
 	Theme.tween(bannerStroke, 0.2, { Transparency = 0.2 })
 	if sub then
 		Theme.tween(subLabel, 0.3, { TextTransparency = 0 })
+		Theme.tween(subStroke, 0.3, { Transparency = 0.4 })
 	end
 
 	task.delay(1.9, function()
@@ -336,6 +353,7 @@ local function showBanner(text: string, color: Color3, sub: string?)
 		Theme.tween(bannerLabel, 0.5, { TextTransparency = 1 })
 		Theme.tween(bannerStroke, 0.5, { Transparency = 1 })
 		Theme.tween(subLabel, 0.5, { TextTransparency = 1 })
+		Theme.tween(subStroke, 0.5, { Transparency = 1 })
 	end)
 end
 
@@ -432,7 +450,7 @@ local function onHeartbeat(dt: number)
 		if math.abs(coinsTarget - coinsShown) < 0.5 then
 			coinsShown = coinsTarget
 		end
-		coinLabel.Text = "🪙 " .. MathUtil.formatNumber(coinsShown)
+		coinLabel.Text = MathUtil.formatNumber(coinsShown)
 	end
 
 	local text
