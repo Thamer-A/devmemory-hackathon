@@ -1,6 +1,6 @@
 # game — project map
 
-Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:28:08+00:00.
+Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:32:47+00:00.
 
 ## Rojo mapping
 - `src/shared` -> ReplicatedStorage.Shared
@@ -20,8 +20,8 @@ Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens)
 - `Log.info(...)` is the shared entry point, called from 7 files.
 - `CurrencyService.add(...)` is the shared entry point, called from 5 files.
 - `Assets.get(...)` is the shared entry point, called from 4 files.
-- `UIController.createLabel(...)` is the shared entry point, called from 3 files.
 - `UIController.createPanel(...)` is the shared entry point, called from 3 files.
+- `UIController.createLabel(...)` is the shared entry point, called from 3 files.
 - `ItemCatalog.getById(...)` is the shared entry point, called from 3 files.
 - Tunables live in `src/shared/Config.luau` (35 keys, used by 7 files); add new constants there.
 

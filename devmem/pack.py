@@ -94,10 +94,15 @@ def freshness(s: dict, project: Path) -> dict:
     Falls back to content hashes for files the session only read."""
     edits = [t for t in s.get("tool_calls", []) if t.get("tool") in ("Edit", "Write") and t.get("file")]
     intact, modified, gone = [], [], []
-    for t in edits:
+    for idx, t in enumerate(edits):
         cur = (project / t["file"])
         txt = cur.read_text(encoding="utf-8", errors="replace") if cur.exists() else ""
         lines = [l.strip() for l in (t.get("new") or "").splitlines() if len(l.strip()) > 8]
+        if not lines:
+            continue
+        # a line the same session later rewrote itself is superseded, not stale
+        later_old = "\n".join(e.get("old") or "" for e in edits[idx + 1:] if e["file"] == t["file"])
+        lines = [l for l in lines if l in txt or l not in later_old]
         if not lines:
             continue
         ratio = sum(1 for l in lines if l in txt) / len(lines)
