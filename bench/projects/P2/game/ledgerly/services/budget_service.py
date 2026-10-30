@@ -18,6 +18,16 @@ class BudgetStatus:
     limit: int
     spent: int
 
+    @property
+    def remaining(self) -> int:
+        """Limit minus spent, in cents. Negative when the budget is exceeded."""
+        return self.limit - self.spent
+
+    @property
+    def percent_used(self) -> int:
+        """Spent as a whole percent of the limit, rounded down. Can exceed 100."""
+        return self.spent * 100 // self.limit
+
 
 def set_budget(conn: sqlite3.Connection, category_name: str, amount_text: str) -> int:
     category = category_service.require_category(conn, category_name)

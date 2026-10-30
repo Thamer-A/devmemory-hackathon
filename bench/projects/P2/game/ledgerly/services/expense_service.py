@@ -38,6 +38,17 @@ def validate_month(month: str) -> str:
     return month
 
 
+def validate_spent_on(spent_on: str) -> str:
+    try:
+        parsed = datetime.strptime(spent_on, config.DATE_FORMAT)
+    except (TypeError, ValueError):
+        raise ValidationError(f"Date must look like YYYY-MM-DD, got {spent_on!r}") from None
+    # strptime also accepts unpadded values such as 2025-3-4; only the canonical form is stored.
+    if parsed.strftime(config.DATE_FORMAT) != spent_on:
+        raise ValidationError(f"Date must look like YYYY-MM-DD, got {spent_on!r}")
+    return spent_on
+
+
 def add_expense(
     conn: sqlite3.Connection,
     amount_text: str,
@@ -54,7 +65,7 @@ def add_expense(
             f"Description is longer than {config.MAX_DESCRIPTION_LEN} characters"
         )
     category = category_service.require_category(conn, category_name)
-    when = (spent_on or "").strip() or date.today().strftime(config.DATE_FORMAT)
+    when = validate_spent_on((spent_on or "").strip() or date.today().strftime(config.DATE_FORMAT))
 
     created_at = datetime.now().isoformat(timespec="seconds")
     expense_id = expense_repo.add(conn, cents, text, category["id"], when, created_at)

@@ -34,7 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     budget_show = budget_sub.add_parser("show", help="show budgets against spending")
     budget_show.add_argument("--month", default=None, help="month (YYYY-MM), default current")
 
-    sub.add_parser("categories", help="list categories")
+    categories = sub.add_parser("categories", help="list categories")
+    categories.add_argument(
+        "--sort-by-name", action="store_true", help="sort alphabetically instead of by id"
+    )
     return parser
 
 
@@ -82,15 +85,24 @@ def _cmd_budget(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
         ui.emit("No budgets set.")
         return
     rows = [
-        (s.category, money.format_cents(s.limit), money.format_cents(s.spent))
+        (
+            s.category,
+            money.format_cents(s.limit),
+            money.format_cents(s.spent),
+            money.format_cents(s.remaining),
+            f"{s.percent_used}%",
+        )
         for s in statuses
     ]
     ui.emit(f"Budgets for {month}")
-    ui.emit_table(rows, ["Category", "Limit", "Spent"])
+    ui.emit_table(rows, ["Category", "Limit", "Spent", "Remaining", "Used"])
 
 
 def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
-    for name in category_service.list_categories(conn):
+    names = category_service.list_categories(conn)
+    if args.sort_by_name:
+        names = sorted(names, key=str.casefold)
+    for name in names:
         ui.emit(name)
 
 

@@ -39,6 +39,47 @@ def test_month_status_without_budget(conn):
         budget_service.month_status(conn, "Health", "2025-03")
 
 
+def test_remaining_is_limit_minus_spent(conn):
+    budget_service.set_budget(conn, "Food", "100")
+    expense_service.add_expense(conn, "30.50", "A", "Food", "2025-03-02")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.remaining == 6950
+
+
+def test_remaining_is_negative_when_overspent(conn):
+    budget_service.set_budget(conn, "Food", "100")
+    expense_service.add_expense(conn, "120", "A", "Food", "2025-03-02")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.remaining == -2000
+
+
+def test_percent_used_rounds_down(conn):
+    budget_service.set_budget(conn, "Food", "100")
+    expense_service.add_expense(conn, "42.99", "A", "Food", "2025-03-02")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.percent_used == 42
+
+
+def test_percent_used_floors_small_fractions(conn):
+    budget_service.set_budget(conn, "Food", "3")
+    expense_service.add_expense(conn, "1", "A", "Food", "2025-03-02")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.percent_used == 33
+
+
+def test_percent_used_zero_when_nothing_spent(conn):
+    budget_service.set_budget(conn, "Food", "100")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.percent_used == 0
+
+
+def test_percent_used_can_exceed_100(conn):
+    budget_service.set_budget(conn, "Food", "100")
+    expense_service.add_expense(conn, "120", "A", "Food", "2025-03-02")
+    status = budget_service.month_status(conn, "Food", "2025-03")
+    assert status.percent_used == 120
+
+
 def test_all_statuses(conn):
     budget_service.set_budget(conn, "Food", "100")
     budget_service.set_budget(conn, "Transport", "50")

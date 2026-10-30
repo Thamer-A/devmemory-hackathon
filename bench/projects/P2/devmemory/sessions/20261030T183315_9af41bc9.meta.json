@@ -1,0 +1,120 @@
+{
+ "session_id": "9af41bc9-06a6-40c0-a3e6-8438762df735",
+ "started_at": "2026-10-30T18:33:15Z",
+ "provider": "claude-code",
+ "capture_method": "stream-json",
+ "model": "claude-haiku-5-5",
+ "prompt": "Let's plan a refunds feature for Ledgerly. Do NOT edit or create any files in this session; we will implement it next session. Decisions we agreed on: (1) a refund is stored as a NEGATIVE expense row linked to the original through a new nullable `refund_of` column on expenses; we never delete or edit the original expense; (2) a refund may not exceed the original amount, and attempting that must raise ConflictError; (3) reports must net refunds into the original expense's category; (4) the CLI command will be `refund EXPENSE_ID [AMOUNT]`, where AMOUNT defaults to the full original amount. Look at the relevant code and reply with a short implementation plan (which files and functions change, what the schema change is) that restates these decisions.",
+ "result_text": "**Plan: refunds (no files changed this session)**\n\nI read `db.py`, the expense repo and service, report and budget services, `money.py`, `errors.py`, `cli.py`, and the tests. Nothing was edited or created.\n\n**Agreed decisions**\n1. A refund is a new expense row with a negative `amount_cents`, linked to the original by `refund_of`. The original is never edited or deleted.\n2. A refund may not exceed the original amount. Violations raise `ConflictError` (exit code 4, the same error the category repo already uses).\n3. Reports net refunds into the original expense's category.\n4. CLI: `refund EXPENSE_ID [AMOUNT]`, where `AMOUNT` defaults to the full original amount.\n\n**Schema change**\n- Add `refund_of INTEGER NULL REFERENCES expenses(id)` to the `expenses` table, plus an index on it.\n- `CREATE TABLE IF NOT EXISTS` won't add a column to an existing database. `init_schema` in `db.py` needs an `ALTER TABLE expenses ADD COLUMN refund_of ...` guarded by a `PRAGMA table_info` check. The index must be created after that step.\n\n**Files and functions**\n- `ledgerly/db.py`: `SCHEMA` gets the column and index. `init_schema` gets the migration step.\n- `ledgerly/repositories/expenses.py`:\n  - `_SELECT` includes `e.refund_of`.\n  - `add()` takes an optional `refund_of`.\n  - New `sum_refunds(conn, expense_id) -> int` returns the total of rows where `refund_of = ?`, as a negative number.\n- `ledgerly/services/expense_service.py`:\n  - `ExpenseRecord` gets `refund_of: int | None`.\n  - New `refund_expense(conn, expense_id, amount_text=None) -> ExpenseRecord`:\n    - Loads the original, raising `NotFoundError` if it is missing.\n    - Rejects refunding a refund with `ConflictError`.\n    - Parses the amount with `money.parse_amount`, which only accepts positive values. If no amount is given, uses the refundable balance.\n    - Raises `ConflictError` if the amount exceeds the balance.\n    - Inserts a row with `-cents`, the original's `category_id` and description, `spent_on` set to today, and `refund_of` set to the original id.\n    - Runs the check and insert in one `BEGIN IMMEDIATE` transaction so two refunds can't both pass the check.\n  - `delete_expense`: should raise `ConflictError` when refunds exist. Otherwise SQLite's foreign key check fails with an `IntegrityError`, which `main()` does not catch.\n- `ledgerly/services/report_service.py` and `budget_service.py`: no code change. Refund rows share the original's `category_id`, so the existing `SUM` queries net them automatically.\n- `ledgerly/cli.py`: add a `refund` subparser with `expense_id` and an optional `amount` (`nargs=\"?\"`), a `_cmd_refund` handler, and an entry in `_HANDLERS`.\n- `ledgerly/errors.py`: no change.\n- Tests: `tests/test_expenses.py` for partial, full, over-limit, cumulative, refund-of-refund, and delete-blocked cases; `tests/test_cli.py` for the command and its default; `tests/test_budget.py` to confirm refunds reduce spent. Update `README.md`.\n\n**Choices to confirm**\n- **Default amount:** The spec says the default is the full original amount. If the original was already partly refunded, that default would always fail. I'd default to the remaining refundable balance, which equals the full amount when nothing has been refunded.\n- **Cap is cumulative:** I'm reading \"may not exceed the original\" as the total of all refunds, not each refund on its own.\n- **Refund month:** A refund is counted in the month it was issued, not the original's month. Monthly reports will show the refund in the refund's month.\n- **Refund of a refund:** Rejected with `ConflictError`.\n- **Deleting a refund row:** Not covered by the decisions. I'd leave it allowed but flag it for your call.",
+ "raw_record": "20261030T183315_9af41bc9.jsonl",
+ "files_read": [
+  "ledgerly/cli.py",
+  "ledgerly/db.py",
+  "ledgerly/errors.py",
+  "ledgerly/money.py",
+  "ledgerly/repositories/expenses.py",
+  "ledgerly/services/budget_service.py",
+  "ledgerly/services/expense_service.py",
+  "ledgerly/services/report_service.py",
+  "tests/conftest.py",
+  "tests/test_expenses.py"
+ ],
+ "files_edited": [],
+ "file_hashes_at_capture": {
+  "ledgerly/cli.py": "c1cdec896c8c8e05",
+  "ledgerly/db.py": "6191b71aea618a73",
+  "ledgerly/errors.py": "194696f969e1c5f7",
+  "ledgerly/money.py": "688c532c809ba978",
+  "ledgerly/repositories/expenses.py": "e06f57138d868ec8",
+  "ledgerly/services/budget_service.py": "2906f4efb8474824",
+  "ledgerly/services/expense_service.py": "7e5a2fca8932ac34",
+  "ledgerly/services/report_service.py": "54ad592a8d7419ea",
+  "tests/conftest.py": "3602746610b1d558",
+  "tests/test_expenses.py": "482ee7a6f1b83c4a"
+ },
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 5658,
+  "cache_read_tokens": 39689,
+  "cache_creation_tokens": 14484,
+  "cost_usd_list": 0.0061234900000000005,
+  "num_turns": 14,
+  "duration_ms": 27128
+ },
+ "assistant_text": [
+  {
+   "line": 46,
+   "text": "**Plan: refunds (no files changed this session)**\n\nI read `db.py`, the expense repo and service, report and budget services, `money.py`, `errors.py`, `cli.py`, and the tests. Nothing was edited or created.\n\n**Agreed decisions**\n1. A refund is a new expense row with a negative `amount_cents`, linked to the original by `refund_of`. The original is never edited or deleted.\n2. A refund may not exceed the original amount. Violations raise `ConflictError` (exit code 4, the same error the category repo already uses).\n3. Reports net refunds into the original expense's category.\n4. CLI: `refund EXPENSE_ID [AMOUNT]`, where `AMOUNT` defaults to the full original amount.\n\n**Schema change**\n- Add `refund_of INTEGER NULL REFERENCES expenses(id)` to the `expenses` table, plus an index on it.\n- `CREATE TABLE IF NOT EXISTS` won't add a column to an existing database. `init_schema` in `db.py` needs an `ALTER TABLE expenses ADD COLUMN refund_of ...` guarded by a `PRAGMA table_info` check. The index must be created after that step.\n\n**Files and functions**\n- `ledgerly/db.py`: `SCHEMA` gets the column and index. `init_schema` gets the migration step.\n- `ledgerly/repositories/expenses.py`:\n  - `_SELECT` includes `e.refund_of`.\n  - `add()` takes an optional `refund_of`.\n  - New `sum_refunds(conn, expense_id) -> int` returns the total of rows where `refund_of = ?`, as a negative number.\n- `ledgerly/services/expense_service.py`:\n  - `ExpenseRecord` gets `refund_of: int | None`.\n  - New `refund_expense(conn, expense_id, amount_text=None) -> ExpenseRecord`:\n    - Loads the original, raising `NotFoundError` if it is missing.\n    - Rejects refunding a refund with `ConflictError`.\n    - Parses the amount with `money.parse_amount`, which only accepts positive values. If no amount is given, uses the refundable balance.\n    - Raises `ConflictError` if the amount exceeds the balance.\n    - Inserts a row with `-cents`, the original's `category_id` and description, `spent_on` set to today, and `refund_of` set to the original id.\n    - Runs the check and insert in one `BEGIN IMMEDIATE` transaction so two refunds can't both pass the check.\n  - `delete_expense`: should raise `ConflictError` when refunds exist. Otherwise SQLite's foreign key check fails with an `IntegrityError`, which `main()` does not catch.\n- `ledgerly/services/report_service.py` and `budget_service.py`: no code change. Refund rows share the original's `category_id`, so the existing `SUM` queries net them automatically.\n- `ledgerly/cli.py`: add a `refund` subparser with `expense_id` and an optional `amount` (`nargs=\"?\"`), a `_cmd_refund` handler, and an entry in `_HANDLERS`.\n- `ledgerly/errors.py`: no change.\n- Tests: `tests/test_expenses.py` for partial, full, over-limit, cumulative, refund-of-refund, and delete-blocked cases; `tests/test_cli.py` for the command and its default; `tests/test_budget.py` to confirm refunds reduce spent. Update `README.md`.\n\n**Choices to confirm**\n- **Default amount:** The spec says the default is the full original amount. If the original was already partly refunded, that default would always fail. I'd default to the remaining refundable balance, which equals the full amount when nothing has been refunded.\n- **Cap is cumulative:** I'm reading \"may not exceed the original\" as the total of all refunds, not each refund on its own.\n- **Refund month:** A refund is counted in the month it was issued, not the original's month. Monthly reports will show the refund in the refund's month.\n- **Refund of a refund:** Rejected with `ConflictError`.\n- **Deleting a refund row:** Not covered by the decisions. I'd leave it allowed but flag it for your call."
+  }
+ ],
+ "tool_calls": [
+  {
+   "line": 4,
+   "tool": "Glob",
+   "pattern": "**/*"
+  },
+  {
+   "line": 6,
+   "tool": "Grep",
+   "pattern": "ConflictError|expense|refund|category"
+  },
+  {
+   "line": 9,
+   "tool": "Read",
+   "file": "ledgerly/db.py"
+  },
+  {
+   "line": 11,
+   "tool": "Read",
+   "file": "ledgerly/repositories/expenses.py"
+  },
+  {
+   "line": 13,
+   "tool": "Read",
+   "file": "ledgerly/services/expense_service.py"
+  },
+  {
+   "line": 15,
+   "tool": "Read",
+   "file": "ledgerly/services/report_service.py"
+  },
+  {
+   "line": 17,
+   "tool": "Read",
+   "file": "ledgerly/cli.py"
+  },
+  {
+   "line": 19,
+   "tool": "Read",
+   "file": "ledgerly/errors.py"
+  },
+  {
+   "line": 24,
+   "tool": "Read",
+   "file": "ledgerly/money.py"
+  },
+  {
+   "line": 26,
+   "tool": "Read",
+   "file": "ledgerly/services/budget_service.py"
+  },
+  {
+   "line": 28,
+   "tool": "Read",
+   "file": "tests/conftest.py"
+  },
+  {
+   "line": 30,
+   "tool": "Read",
+   "file": "tests/test_expenses.py"
+  },
+  {
+   "line": 32,
+   "tool": "Grep",
+   "pattern": "ConflictError|sum_for_category|\\.delete\\(|refund"
+  }
+ ],
+ "errors": [],
+ "script_id": "S0a",
+ "script_kind": "history-only plan (H1)"
+}

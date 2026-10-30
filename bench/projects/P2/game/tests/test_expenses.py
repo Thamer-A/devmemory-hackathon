@@ -30,6 +30,29 @@ def test_add_rejects_bad_input(conn):
         expense_service.add_expense(conn, "5", "x" * (config.MAX_DESCRIPTION_LEN + 1), "Food")
 
 
+@pytest.mark.parametrize(
+    "bad_date",
+    [
+        "14/03/2025",
+        "2025-3-4",
+        "2025/03/14",
+        "2025-02-30",
+        "14-03-2025",
+        "March 14",
+        "2025-03-14T00:00",
+    ],
+)
+def test_add_rejects_non_iso_dates(conn, bad_date):
+    with pytest.raises(ValidationError):
+        expense_service.add_expense(conn, "5", "Lunch", "Food", bad_date)
+    assert expense_service.list_expenses(conn) == []
+
+
+def test_add_accepts_iso_date_with_surrounding_space(conn):
+    record = expense_service.add_expense(conn, "5", "Lunch", "Food", " 2025-03-14 ")
+    assert record.spent_on == "2025-03-14"
+
+
 def test_add_unknown_category(conn):
     with pytest.raises(NotFoundError):
         expense_service.add_expense(conn, "5", "Thing", "Nope")
