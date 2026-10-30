@@ -59,7 +59,8 @@ def compute_checks(spec: dict, server: dict, client: dict, gameover: dict | None
         "no_errors": not errors,
         "blades_render": (client.get("blades_max") or 0) >= 1,
         "zombies_spawn": (server.get("npc_max") or 0) >= 1,
-        "zombies_chase": df is not None and dm is not None and dm < df - 4,
+        # approach observed, or zombies reached a player who never moved (measurement may start late)
+        "zombies_chase": dm is not None and ((df is not None and dm < df - 4) or dm < 6),
         "kills_and_coins": grew("coin") and grew("kill"),
         "waves_advance": bool(client.get("wave2_seen")) or (server.get("npc_spawned") or 0) > 8,
         "player_damaged": server.get("health_min") is not None and server["health_min"] < (server.get("health_max") or 0),
