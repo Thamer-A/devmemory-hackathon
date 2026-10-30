@@ -1,0 +1,8 @@
+{
+ "id": "C1",
+ "project": "P2",
+ "type": "stale",
+ "split": "heldout",
+ "prompt": "Add a `budget highest` command that prints the category with the largest budget limit and its limit.",
+ "max_turns": 30
+}

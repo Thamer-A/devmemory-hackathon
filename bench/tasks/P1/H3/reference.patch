@@ -1,0 +1,63 @@
+diff --git a/src/server/services/EnemyService.luau b/src/server/services/EnemyService.luau
+index 9f19d02..fffaac2 100644
+--- a/src/server/services/EnemyService.luau
++++ b/src/server/services/EnemyService.luau
+@@ -18,7 +18,7 @@ local RoundService = require(script.Parent.RoundService)
+ local EnemyService = {}
+ 
+ local ENEMY_TAG = "CoinRushEnemy"
+-local KINDS = { "Grunt", "Brute" }
++local KINDS = { "Grunt", "Brute", "Boss" }
+ 
+ type EnemyRecord = {
+ 	model: Model,
+@@ -248,7 +248,11 @@ local function countEnemies(): number
+ end
+ 
+ local function chooseKind(): string
+-	if math.random() < Config.BruteSpawnChance then
++	local roll = math.random()
++	if roll < Config.BossSpawnChance then
++		return KINDS[3]
++	end
++	if roll < Config.BossSpawnChance + Config.BruteSpawnChance then
+ 		return KINDS[2]
+ 	end
+ 	return KINDS[1]
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..fb9a497 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -39,6 +39,7 @@ local Config = {
+ 	Enemies = {
+ 		Grunt = { health = 50, speed = 14, damage = 12 },
+ 		Brute = { health = 200, speed = 8, damage = 25 },
++		Boss = { health = 500, speed = 10, damage = 40 },
+ 	},
+ 	EnemySpawnInterval = 6,
+ 	MaxEnemies = 8,
+@@ -46,10 +47,12 @@ local Config = {
+ 	EnemyHitCooldown = 1,
+ 	EnemySpawnZoneName = "EnemySpawns",
+ 	BruteSpawnChance = 0.25,
++	BossSpawnChance = 0.05,
+ 	EnemyPlaceholderSize = Vector3.new(2, 5, 2),
+ 	EnemyPlaceholderColors = {
+ 		Grunt = Color3.fromRGB(90, 160, 80),
+ 		Brute = Color3.fromRGB(170, 60, 60),
++		Boss = Color3.fromRGB(110, 40, 160),
+ 	},
+ 
+ 	-- Admin
+diff --git a/src/shared/Types.luau b/src/shared/Types.luau
+index e4663ec..aaad466 100644
+--- a/src/shared/Types.luau
++++ b/src/shared/Types.luau
+@@ -16,6 +16,6 @@ export type RoundState = {
+ 	timeLeft: number,
+ }
+ 
+-export type EnemyKind = "Grunt" | "Brute"
++export type EnemyKind = "Grunt" | "Brute" | "Boss"
+ 
+ return {}

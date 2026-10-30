@@ -1,0 +1,15 @@
+diff --git a/src/shared/MathUtil.luau b/src/shared/MathUtil.luau
+index 0a850ed..099f317 100644
+--- a/src/shared/MathUtil.luau
++++ b/src/shared/MathUtil.luau
+@@ -13,6 +13,10 @@ function MathUtil.clamp(n: number, min: number, max: number): number
+ 	return math.max(min, math.min(max, n))
+ end
+ 
++function MathUtil.approxEqual(a: number, b: number, epsilon: number?): boolean
++	return math.abs(a - b) <= (epsilon or 1e-6)
++end
++
+ function MathUtil.formatNumber(n: number): string
+ 	local formatted = tostring(math.floor(n + 0.5))
+ 	local replaced

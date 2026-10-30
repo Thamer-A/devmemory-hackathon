@@ -1,0 +1,12 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..eeed0de 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -12,6 +12,7 @@ from ledgerly.services import budget_service, category_service, expense_service,
+ 
+ def build_parser() -> argparse.ArgumentParser:
+     parser = argparse.ArgumentParser(prog="ledgerly", description="Personal expense tracker")
++    parser.add_argument("--version", action="version", version="ledgerly 0.1.0")
+     sub = parser.add_subparsers(dest="command", required=True)
+ 
+     add = sub.add_parser("add", help="record an expense")

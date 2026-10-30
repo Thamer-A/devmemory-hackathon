@@ -1,0 +1,71 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..992da22 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
+ 
+     ls = sub.add_parser("list", help="list expenses")
+     ls.add_argument("--month", default=None, help="only this month (YYYY-MM)")
++    ls.add_argument("--search", default=None, help="only descriptions containing this text")
+ 
+     report = sub.add_parser("report", help="monthly totals by category")
+     report.add_argument("--month", required=True, help="month (YYYY-MM)")
+@@ -52,7 +53,7 @@ def _cmd_add(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+ 
+ 
+ def _cmd_list(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+-    records = expense_service.list_expenses(conn, args.month)
++    records = expense_service.list_expenses(conn, args.month, args.search)
+     if not records:
+         ui.emit("No expenses found.")
+         return
+diff --git a/ledgerly/repositories/expenses.py b/ledgerly/repositories/expenses.py
+index 5db24fd..47bc72f 100644
+--- a/ledgerly/repositories/expenses.py
++++ b/ledgerly/repositories/expenses.py
+@@ -27,13 +27,19 @@ def get(conn: sqlite3.Connection, expense_id: int) -> sqlite3.Row | None:
+     return conn.execute(_SELECT + " WHERE e.id = ?", (expense_id,)).fetchone()
+ 
+ 
+-def list_expenses(conn: sqlite3.Connection, month: str | None = None) -> list[sqlite3.Row]:
+-    if month is None:
+-        return conn.execute(_SELECT + " ORDER BY e.spent_on, e.id").fetchall()
+-    return conn.execute(
+-        _SELECT + " WHERE substr(e.spent_on, 1, 7) = ? ORDER BY e.spent_on, e.id",
+-        (month,),
+-    ).fetchall()
++def list_expenses(
++    conn: sqlite3.Connection, month: str | None = None, search: str | None = None
++) -> list[sqlite3.Row]:
++    clauses: list[str] = []
++    params: list[str] = []
++    if month is not None:
++        clauses.append("substr(e.spent_on, 1, 7) = ?")
++        params.append(month)
++    if search:
++        clauses.append("instr(lower(e.description), lower(?)) > 0")
++        params.append(search)
++    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
++    return conn.execute(_SELECT + where + " ORDER BY e.spent_on, e.id", params).fetchall()
+ 
+ 
+ def delete(conn: sqlite3.Connection, expense_id: int) -> bool:
+diff --git a/ledgerly/services/expense_service.py b/ledgerly/services/expense_service.py
+index 9157969..f4f9107 100644
+--- a/ledgerly/services/expense_service.py
++++ b/ledgerly/services/expense_service.py
+@@ -81,10 +81,12 @@ def get_expense(conn: sqlite3.Connection, expense_id: int) -> ExpenseRecord:
+     return _to_record(row)
+ 
+ 
+-def list_expenses(conn: sqlite3.Connection, month: str | None = None) -> list[ExpenseRecord]:
++def list_expenses(
++    conn: sqlite3.Connection, month: str | None = None, search: str | None = None
++) -> list[ExpenseRecord]:
+     if month is not None:
+         validate_month(month)
+-    return [_to_record(row) for row in expense_repo.list_expenses(conn, month)]
++    return [_to_record(row) for row in expense_repo.list_expenses(conn, month, search)]
+ 
+ 
+ def delete_expense(conn: sqlite3.Connection, expense_id: int) -> None:

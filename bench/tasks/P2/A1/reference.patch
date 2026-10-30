@@ -1,0 +1,65 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..6f362ba 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -1,6 +1,8 @@
+ """Command line interface."""
+ 
+ import argparse
++import csv
++import io
+ import sqlite3
+ from datetime import date
+ from typing import Sequence
+@@ -38,6 +40,9 @@ def build_parser() -> argparse.ArgumentParser:
+     categories.add_argument(
+         "--sort-by-name", action="store_true", help="sort alphabetically instead of by id"
+     )
++
++    export = sub.add_parser("export", help="print expenses as CSV")
++    export.add_argument("--month", default=None, help="only this month (YYYY-MM)")
+     return parser
+ 
+ 
+@@ -106,12 +111,23 @@ def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         ui.emit(name)
+ 
+ 
++def _cmd_export(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
++    records = expense_service.list_expenses(conn, args.month)
++    buf = io.StringIO()
++    writer = csv.writer(buf, lineterminator="\n")
++    writer.writerow(["id", "date", "category", "amount", "description"])
++    for r in records:
++        writer.writerow([r.id, r.spent_on, r.category, money.format_plain(r.amount_cents), r.description])
++    ui.emit(buf.getvalue().rstrip("\n"))
++
++
+ _HANDLERS = {
+     "add": _cmd_add,
+     "list": _cmd_list,
+     "report": _cmd_report,
+     "budget": _cmd_budget,
+     "categories": _cmd_categories,
++    "export": _cmd_export,
+ }
+ 
+ 
+diff --git a/ledgerly/money.py b/ledgerly/money.py
+index 6aa99f7..bf7c4c4 100644
+--- a/ledgerly/money.py
++++ b/ledgerly/money.py
+@@ -24,6 +24,13 @@ def parse_amount(text: str) -> int:
+     return int(value * 100)
+ 
+ 
++def format_plain(cents: int) -> str:
++    """Plain decimal text such as "12.50" (no currency, no separators)."""
++    sign = "-" if cents < 0 else ""
++    whole, fraction = divmod(abs(cents), 100)
++    return f"{sign}{whole}.{fraction:02d}"
++
++
+ def format_cents(cents: int, currency: str = config.DEFAULT_CURRENCY) -> str:
+     sign = "-" if cents < 0 else ""
+     whole, fraction = divmod(abs(cents), 100)

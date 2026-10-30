@@ -1,0 +1,8 @@
+{
+ "id": "B1",
+ "project": "P2",
+ "type": "history",
+ "split": "heldout",
+ "prompt": "Implement the refunds feature we planned.",
+ "max_turns": 30
+}

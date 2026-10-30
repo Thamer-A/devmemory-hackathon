@@ -1,0 +1,8 @@
+{
+ "id": "B2",
+ "project": "P2",
+ "type": "history",
+ "split": "heldout",
+ "prompt": "Add an `import FILE` command that loads expenses from a CSV with the header amount,description,category,date. Keep it consistent with what we decided about dates after that mixed-format bug.",
+ "max_turns": 30
+}

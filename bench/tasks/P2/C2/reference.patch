@@ -1,0 +1,40 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..f6ad1e3 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -6,7 +6,7 @@ from datetime import date
+ from typing import Sequence
+ 
+ from ledgerly import config, db, money, ui
+-from ledgerly.errors import AppError
++from ledgerly.errors import AppError, ConflictError
+ from ledgerly.services import budget_service, category_service, expense_service, report_service
+ 
+ 
+@@ -31,6 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
+     budget_set = budget_sub.add_parser("set", help="set a category budget")
+     budget_set.add_argument("category")
+     budget_set.add_argument("amount")
++    budget_check = budget_sub.add_parser("check", help="check one category against its budget")
++    budget_check.add_argument("category")
++    budget_check.add_argument("--month", default=None, help="month (YYYY-MM), default current")
+     budget_show = budget_sub.add_parser("show", help="show budgets against spending")
+     budget_show.add_argument("--month", default=None, help="month (YYYY-MM), default current")
+ 
+@@ -79,6 +82,16 @@ def _cmd_budget(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         cents = budget_service.set_budget(conn, args.category, args.amount)
+         ui.emit(f"Budget for {args.category} set to {money.format_cents(cents)}")
+         return
++    if args.budget_command == "check":
++        month = args.month or date.today().strftime(config.MONTH_FORMAT)
++        status = budget_service.status_for_month(conn, args.category, month)
++        ui.emit(
++            f"{status.category} {month}: {money.format_cents(status.spent)} of "
++            f"{money.format_cents(status.limit)} ({status.percent_used}% used)"
++        )
++        if status.spent > status.limit:
++            raise ConflictError(f"{status.category} is over budget")
++        return
+     month = args.month or date.today().strftime(config.MONTH_FORMAT)
+     statuses = budget_service.all_statuses(conn, month)
+     if not statuses:

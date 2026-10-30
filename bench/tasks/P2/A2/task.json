@@ -1,0 +1,8 @@
+{
+ "id": "A2",
+ "project": "P2",
+ "type": "code",
+ "split": "heldout",
+ "prompt": "Add a `--search TEXT` option to `list` that only shows expenses whose description contains TEXT. Plain case-insensitive substring match; it should combine with --month.",
+ "max_turns": 30
+}

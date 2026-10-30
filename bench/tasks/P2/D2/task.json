@@ -1,0 +1,8 @@
+{
+ "id": "D2",
+ "project": "P2",
+ "type": "unrelated",
+ "split": "heldout",
+ "prompt": "Make money.parse_amount accept an optional leading dollar sign, so \"$12.50\" parses to 1250.",
+ "max_turns": 30
+}

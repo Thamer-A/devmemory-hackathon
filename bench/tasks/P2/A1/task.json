@@ -1,0 +1,8 @@
+{
+ "id": "A1",
+ "project": "P2",
+ "type": "code",
+ "split": "heldout",
+ "prompt": "Add an `export` command that prints expenses as CSV: a header row, then id, date, category, amount (plain decimal like 12.50) and description. It should accept the same optional --month filter as `list`.",
+ "max_turns": 30
+}

@@ -1,0 +1,8 @@
+{
+ "id": "H1",
+ "project": "P1",
+ "type": "code",
+ "split": "heldout",
+ "prompt": "Players should be able to own at most 3 items. Refuse any purchase beyond that, and make the limit easy to change.",
+ "max_turns": 30
+}

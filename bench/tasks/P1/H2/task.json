@@ -1,0 +1,8 @@
+{
+ "id": "H2",
+ "project": "P1",
+ "type": "history",
+ "split": "heldout",
+ "prompt": "Add the daily reward payout calculation from the plan we made as a shared module, src/shared/DailyReward.luau, exposing DailyReward.coinsFor(streak) that returns the coins for a given streak length.",
+ "max_turns": 30
+}

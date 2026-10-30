@@ -1,0 +1,46 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..aef4f36 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -1,6 +1,7 @@
+ """Command line interface."""
+ 
+ import argparse
++import csv
+ import sqlite3
+ from datetime import date
+ from typing import Sequence
+@@ -38,6 +39,9 @@ def build_parser() -> argparse.ArgumentParser:
+     categories.add_argument(
+         "--sort-by-name", action="store_true", help="sort alphabetically instead of by id"
+     )
++
++    imp = sub.add_parser("import", help="import expenses from a CSV file")
++    imp.add_argument("file")
+     return parser
+ 
+ 
+@@ -106,12 +110,23 @@ def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         ui.emit(name)
+ 
+ 
++def _cmd_import(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
++    with open(args.file, newline="", encoding="utf-8") as handle:
++        rows = list(csv.DictReader(handle))
++    for row in rows:
++        expense_service.add_expense(
++            conn, row.get("amount", ""), row.get("description", ""), row.get("category", ""), row.get("date", "")
++        )
++    ui.emit(f"Imported {len(rows)} expenses")
++
++
+ _HANDLERS = {
+     "add": _cmd_add,
+     "list": _cmd_list,
+     "report": _cmd_report,
+     "budget": _cmd_budget,
+     "categories": _cmd_categories,
++    "import": _cmd_import,
+ }
+ 
+ 

@@ -1,0 +1,29 @@
+diff --git a/src/server/services/ShopService.luau b/src/server/services/ShopService.luau
+index 2b2c872..545df63 100644
+--- a/src/server/services/ShopService.luau
++++ b/src/server/services/ShopService.luau
+@@ -61,6 +61,12 @@ local function onPurchaseItem(player: Player, itemId: any)
+ 		return
+ 	end
+ 
++	local data = DataService.get(player)
++	if data == nil or #data.inventory >= Config.MaxInventorySize then
++		Log.info("ShopService", player.Name, "inventory is full")
++		return
++	end
++
+ 	if not CurrencyService.canAfford(player, item.price) then
+ 		return
+ 	end
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..63082cb 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -10,6 +10,7 @@ local Config = {
+ 	RoundRewardCoins = 25,
+ 	KillReward = 10,
+ 	PurchaseCooldown = 0.5,
++	MaxInventorySize = 3,
+ 
+ 	-- Coins in the world
+ 	CoinSpawnInterval = 3,

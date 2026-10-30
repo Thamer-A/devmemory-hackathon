@@ -1,0 +1,32 @@
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..fc2eca2 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -9,6 +9,9 @@ local Config = {
+ 	CoinPickupValue = 5,
+ 	RoundRewardCoins = 25,
+ 	KillReward = 10,
++	DailyRewardBase = 20,
++	DailyRewardPerStreakDay = 10,
++	DailyStreakCap = 7,
+ 	PurchaseCooldown = 0.5,
+ 
+ 	-- Coins in the world
+diff --git a/src/shared/DailyReward.luau b/src/shared/DailyReward.luau
+new file mode 100644
+index 0000000..ab589fb
+--- /dev/null
++++ b/src/shared/DailyReward.luau
+@@ -0,0 +1,12 @@
++--!strict
++local Config = require(script.Parent.Config)
++
++local DailyReward = {}
++
++-- Coins for a given streak length: base plus a bonus per streak day, with the streak capped.
++function DailyReward.coinsFor(streak: number): number
++	local days = math.min(math.max(streak, 1), Config.DailyStreakCap)
++	return Config.DailyRewardBase + Config.DailyRewardPerStreakDay * days
++end
++
++return DailyReward

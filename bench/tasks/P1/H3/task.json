@@ -1,0 +1,8 @@
+{
+ "id": "H3",
+ "project": "P1",
+ "type": "stale",
+ "split": "heldout",
+ "prompt": "Add a Boss enemy: 500 health, speed 10, 40 damage, spawning about 5% of the time.",
+ "max_turns": 30
+}

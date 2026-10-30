@@ -1,0 +1,8 @@
+{
+ "id": "H4",
+ "project": "P1",
+ "type": "unrelated",
+ "split": "heldout",
+ "prompt": "Add a MathUtil.approxEqual(a, b, epsilon) function that returns true when a and b differ by no more than epsilon (default 1e-6).",
+ "max_turns": 30
+}

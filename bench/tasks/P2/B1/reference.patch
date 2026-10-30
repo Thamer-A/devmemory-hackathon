@@ -1,0 +1,134 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..3a81b7f 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -38,6 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
+     categories.add_argument(
+         "--sort-by-name", action="store_true", help="sort alphabetically instead of by id"
+     )
++
++    refund = sub.add_parser("refund", help="refund (part of) an expense")
++    refund.add_argument("expense_id", type=int)
++    refund.add_argument("amount", nargs="?", default=None, help="default: the full original amount")
+     return parser
+ 
+ 
+@@ -106,12 +110,18 @@ def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         ui.emit(name)
+ 
+ 
++def _cmd_refund(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
++    record = expense_service.refund_expense(conn, args.expense_id, args.amount)
++    ui.emit(f"Refunded #{args.expense_id}: {money.format_cents(-record.amount_cents)} (entry #{record.id})")
++
++
+ _HANDLERS = {
+     "add": _cmd_add,
+     "list": _cmd_list,
+     "report": _cmd_report,
+     "budget": _cmd_budget,
+     "categories": _cmd_categories,
++    "refund": _cmd_refund,
+ }
+ 
+ 
+diff --git a/ledgerly/db.py b/ledgerly/db.py
+index d6a2d10..420808e 100644
+--- a/ledgerly/db.py
++++ b/ledgerly/db.py
+@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS expenses (
+     description TEXT NOT NULL,
+     category_id INTEGER NOT NULL REFERENCES categories(id),
+     spent_on TEXT NOT NULL,
+-    created_at TEXT NOT NULL
++    created_at TEXT NOT NULL,
++    refund_of INTEGER REFERENCES expenses(id)
+ );
+ 
+ CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on);
+diff --git a/ledgerly/repositories/expenses.py b/ledgerly/repositories/expenses.py
+index 5db24fd..3b1c8e2 100644
+--- a/ledgerly/repositories/expenses.py
++++ b/ledgerly/repositories/expenses.py
+@@ -1,7 +1,7 @@
+ import sqlite3
+ 
+ _SELECT = """
+-SELECT e.id, e.amount_cents, e.description, c.name AS category, e.spent_on
++SELECT e.id, e.amount_cents, e.description, c.name AS category, e.category_id, e.spent_on, e.refund_of
+ FROM expenses e
+ JOIN categories c ON c.id = e.category_id
+ """
+@@ -14,15 +14,25 @@ def add(
+     category_id: int,
+     spent_on: str,
+     created_at: str,
++    refund_of: int | None = None,
+ ) -> int:
+     cur = conn.execute(
+-        "INSERT INTO expenses (amount_cents, description, category_id, spent_on, created_at)"
+-        " VALUES (?, ?, ?, ?, ?)",
+-        (amount_cents, description, category_id, spent_on, created_at),
++        "INSERT INTO expenses (amount_cents, description, category_id, spent_on, created_at, refund_of)"
++        " VALUES (?, ?, ?, ?, ?, ?)",
++        (amount_cents, description, category_id, spent_on, created_at, refund_of),
+     )
+     return int(cur.lastrowid)
+ 
+ 
++def refunded_total(conn: sqlite3.Connection, expense_id: int) -> int:
++    """Sum of refunds (as a positive number of cents) already recorded against an expense."""
++    row = conn.execute(
++        "SELECT COALESCE(-SUM(amount_cents), 0) AS total FROM expenses WHERE refund_of = ?",
++        (expense_id,),
++    ).fetchone()
++    return int(row["total"])
++
++
+ def get(conn: sqlite3.Connection, expense_id: int) -> sqlite3.Row | None:
+     return conn.execute(_SELECT + " WHERE e.id = ?", (expense_id,)).fetchone()
+ 
+diff --git a/ledgerly/services/expense_service.py b/ledgerly/services/expense_service.py
+index 9157969..7a83d9f 100644
+--- a/ledgerly/services/expense_service.py
++++ b/ledgerly/services/expense_service.py
+@@ -3,7 +3,7 @@ from dataclasses import dataclass
+ from datetime import date, datetime
+ 
+ from ledgerly import config, money
+-from ledgerly.errors import NotFoundError, ValidationError
++from ledgerly.errors import ConflictError, NotFoundError, ValidationError
+ from ledgerly.logging_setup import get_logger
+ from ledgerly.repositories import expenses as expense_repo
+ from ledgerly.services import category_service
+@@ -74,6 +74,30 @@ def add_expense(
+     return get_expense(conn, expense_id)
+ 
+ 
++def refund_expense(
++    conn: sqlite3.Connection, expense_id: int, amount_text: str | None = None
++) -> ExpenseRecord:
++    """Record a refund as a negative expense linked to the original; the original is untouched."""
++    original = expense_repo.get(conn, expense_id)
++    if original is None:
++        raise NotFoundError(f"No expense with id {expense_id}")
++    if original["amount_cents"] <= 0:
++        raise ConflictError("Only a regular expense can be refunded")
++    already = expense_repo.refunded_total(conn, expense_id)
++    cents = original["amount_cents"] - already if amount_text is None else money.parse_amount(amount_text)
++    if cents <= 0 or already + cents > original["amount_cents"]:
++        raise ConflictError(f"Refund exceeds the original amount of expense {expense_id}")
++    created_at = datetime.now().isoformat(timespec="seconds")
++    when = date.today().strftime(config.DATE_FORMAT)
++    refund_id = expense_repo.add(
++        conn, -cents, f"Refund of #{expense_id}: {original['description']}"[: config.MAX_DESCRIPTION_LEN],
++        original["category_id"], when, created_at, refund_of=expense_id,
++    )
++    conn.commit()
++    log.info("refunded %s cents of expense %s", cents, expense_id)
++    return get_expense(conn, refund_id)
++
++
+ def get_expense(conn: sqlite3.Connection, expense_id: int) -> ExpenseRecord:
+     row = expense_repo.get(conn, expense_id)
+     if row is None:

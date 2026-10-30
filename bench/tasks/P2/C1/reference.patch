@@ -1,0 +1,61 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..e6e56ff 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -31,6 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
+     budget_set = budget_sub.add_parser("set", help="set a category budget")
+     budget_set.add_argument("category")
+     budget_set.add_argument("amount")
++    budget_sub.add_parser("highest", help="show the category with the largest budget")
+     budget_show = budget_sub.add_parser("show", help="show budgets against spending")
+     budget_show.add_argument("--month", default=None, help="month (YYYY-MM), default current")
+ 
+@@ -79,6 +80,13 @@ def _cmd_budget(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         cents = budget_service.set_budget(conn, args.category, args.amount)
+         ui.emit(f"Budget for {args.category} set to {money.format_cents(cents)}")
+         return
++    if args.budget_command == "highest":
++        best = budget_service.highest_budget(conn)
++        if best is None:
++            ui.emit("No budgets set.")
++        else:
++            ui.emit(f"{best[0]}: {money.format_cents(best[1])}")
++        return
+     month = args.month or date.today().strftime(config.MONTH_FORMAT)
+     statuses = budget_service.all_statuses(conn, month)
+     if not statuses:
+diff --git a/ledgerly/repositories/budgets.py b/ledgerly/repositories/budgets.py
+index cebcc41..fca8aea 100644
+--- a/ledgerly/repositories/budgets.py
++++ b/ledgerly/repositories/budgets.py
+@@ -16,6 +16,14 @@ def get_limit(conn: sqlite3.Connection, category_id: int) -> int | None:
+     return None if row is None else int(row["limit_cents"])
+ 
+ 
++def highest(conn: sqlite3.Connection) -> sqlite3.Row | None:
++    return conn.execute(
++        "SELECT c.name AS category, b.limit_cents AS limit_cents"
++        " FROM budgets b JOIN categories c ON c.id = b.category_id"
++        " ORDER BY b.limit_cents DESC, c.name LIMIT 1"
++    ).fetchone()
++
++
+ def list_limits(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+     return conn.execute(
+         "SELECT c.id AS category_id, c.name AS category, b.limit_cents AS limit_cents"
+diff --git a/ledgerly/services/budget_service.py b/ledgerly/services/budget_service.py
+index c553ded..608944a 100644
+--- a/ledgerly/services/budget_service.py
++++ b/ledgerly/services/budget_service.py
+@@ -48,6 +48,11 @@ def status_for_month(conn: sqlite3.Connection, category_name: str, month: str) -
+     return BudgetStatus(category=category["name"], limit=limit, spent=spent)
+ 
+ 
++def highest_budget(conn: sqlite3.Connection) -> tuple[str, int] | None:
++    row = budget_repo.highest(conn)
++    return None if row is None else (row["category"], int(row["limit_cents"]))
++
++
+ def all_statuses(conn: sqlite3.Connection, month: str) -> list[BudgetStatus]:
+     validate_month(month)
+     return [status_for_month(conn, row["category"], month) for row in budget_repo.list_limits(conn)]

@@ -1,0 +1,13 @@
+diff --git a/ledgerly/money.py b/ledgerly/money.py
+index 6aa99f7..7ee5587 100644
+--- a/ledgerly/money.py
++++ b/ledgerly/money.py
+@@ -9,6 +9,8 @@ from ledgerly.errors import ValidationError
+ def parse_amount(text: str) -> int:
+     """Convert user text such as "12.5" into integer cents (1250)."""
+     raw = (text or "").strip()
++    if raw.startswith("$"):
++        raw = raw[1:].strip()
+     if not raw:
+         raise ValidationError("Amount is required")
+     try:

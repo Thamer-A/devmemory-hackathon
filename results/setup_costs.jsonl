@@ -1,1 +1,3 @@
 {"suite": "dev1", "project": "P1", "scan_s": 0.026, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "dev2", "project": "P1", "scan_s": 0.028, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "dev2", "project": "P1", "scan_s": 0.026, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
