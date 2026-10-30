@@ -12,8 +12,9 @@ from pathlib import Path
 
 
 def _src(work: Path) -> dict[str, str]:
+    # Rojo accepts both .luau and .lua; agents use either
     return {p.relative_to(work).as_posix(): p.read_text(encoding="utf-8", errors="replace")
-            for p in Path(work).rglob("*.luau") if ".git" not in p.parts}
+            for p in Path(work).rglob("*") if p.suffix in (".luau", ".lua") and ".git" not in p.parts}
 
 
 def _any(src: dict[str, str], pattern: str, flags=re.I) -> bool:
@@ -48,7 +49,7 @@ def grade(work: Path) -> dict:
         # S1
         "config_module_in_shared": any(Path(k).stem.lower().startswith("config") for k in shared),
         "remotes_in_single_module": len(remote_files) == 1 and "remote" in remote_files[0].lower(),
-        "start_blades_2": _any(src, r"\b\w*blade\w*count\w*\s*=\s*2\b|\b(start|base|initial)\w*blades?\w*\s*=\s*2\b"),
+        "start_blades_2": _any(src, r"\b\w*blade\w*count\w*\s*=\s*2\b|\b(start|base|initial)\w*(blades?|count)\w*\s*=\s*2\b"),
         "orbit_radius_7": _any(src, r"\b\w*(radius|orbit|reach)\w*\s*=\s*7(\.0)?\b"),
         "neon_cyan_blades": _any(src, r"Enum\.Material\.Neon") and (_any(src, r"cyan") or _cyan_rgb(src)),
         # S2
@@ -73,7 +74,7 @@ def grade(work: Path) -> dict:
         "twin_spin_epic_120": _line_with(src, ["twin"], r"120|epic") and _any(src, r"Epic"),
         # S5
         "rarity_colors_defined": all(_any(src, r) for r in (r"\bCommon\b", r"\bRare\b", r"\bEpic\b")) and _any(src, r"Color3"),
-        "hud_health_bar": _any(src, r"health\w*bar|hpbar|HealthFill|health_fill"),
+        "hud_health_bar": _any(src, r"health\w*bar|health bar|hpbar|HealthFill|health_fill"),
         # S8
         "damage_numbers_billboard": _any(src, r"BillboardGui"),
         "death_burst_particles": _any(src, r"ParticleEmitter"),
