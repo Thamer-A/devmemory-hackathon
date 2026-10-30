@@ -55,13 +55,15 @@ CONDITIONS = {
 }
 
 
-def load_tasks(selector: str | None, split: str | None) -> list[dict]:
+def load_tasks(selector: str | None, split: str | None, types: str | None = None) -> list[dict]:
     tasks = []
     for tj in sorted((BENCH / "tasks").glob("*/*/task.json")):
         t = json.loads(tj.read_text(encoding="utf-8"))
         t["dir"] = tj.parent
         key = f"{t['project']}:{t['id']}"
         if selector and key not in selector.split(","):
+            continue
+        if types and t.get("type") not in types.split(","):
             continue
         if split and t.get("split") != split:
             continue
@@ -153,6 +155,7 @@ def main(argv=None):
     ap.add_argument("--suite", required=True, help="name for this batch, e.g. dev1")
     ap.add_argument("--tasks", help="comma list of PROJECT:ID")
     ap.add_argument("--split", choices=["dev", "heldout"])
+    ap.add_argument("--types", help="comma list of task types (code,history,stale,unrelated)")
     ap.add_argument("--conditions", default="C0", help="comma list or 'all'")
     ap.add_argument("--models", default="haiku")
     ap.add_argument("--repeats", type=int, default=1)
@@ -163,7 +166,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     if a.split == "heldout" and not a.dry:
         print("Held-out split requested: this is the one-time final run.", file=sys.stderr)
-    tasks = load_tasks(a.tasks, a.split)
+    tasks = load_tasks(a.tasks, a.split, a.types)
     conds = list(CONDITIONS) if a.conditions == "all" else a.conditions.split(",")
     jobs = [(t, c, m, r) for r in range(a.repeats) for t in tasks for c in conds for m in a.models.split(",")]
     print(f"{len(jobs)} runs: {len(tasks)} tasks x {conds} x {a.models} x {a.repeats}", file=sys.stderr)
