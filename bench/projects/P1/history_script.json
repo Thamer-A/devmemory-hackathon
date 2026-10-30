@@ -1,0 +1,15 @@
+{
+ "about": "Scripted prior sessions ('session 0') run with real headless Claude Code on the v0 project, in order. Each is captured via devmem capture (stream-json). Their edits are committed to the project; their records become the history fixtures. After these, an UNCAPTURED human refactor (v2) makes S0c/S0d memories stale.",
+ "model": "haiku",
+ "sessions": [
+  {"id": "S0a", "kind": "history-only plan (H1)", "prompt": "Let's plan the daily login reward. Do NOT edit or create any files in this session; we will implement it next session. Decisions we agreed on: (1) coins are granted only through CurrencyService.add with the reason string \"daily_reward\"; (2) the day boundary is 00:00 UTC, not server local time; (3) reward is 20 coins plus 10 per streak day; (4) the streak caps at 7 days, as a new Config.DailyStreakCap = 7; (5) missing a full UTC day resets the streak to 1. Look at the relevant code and reply with a short implementation plan (which files change, which data fields to add) that restates these decisions."},
+  {"id": "S0b", "kind": "decision with rationale (H2)", "prompt": "Bug report: players who bought 'Speed Coil' lost it after we renamed the item to 'Speed Boots', because inventories store item names. Decision: inventories must store numeric ItemCatalog ids, never names; names are display-only and can change. Update DataService, Types and all callers to store and compare ids, and migrate old saved data on load: map string entries via ItemCatalog.getByName, plus the legacy name 'Speed Coil' -> id 1; drop unknown names with a Log.warn. Follow the existing project conventions."},
+  {"id": "S0c", "kind": "becomes stale (S1)", "prompt": "Grunts feel too weak. Raise Grunt damage from 10 to 12. Brute damage stays at 25."},
+  {"id": "S0d", "kind": "becomes stale (S2)", "prompt": "Players report double purchases when they spam the Buy button. Make sure the server-side BuyItem remote handler rejects purchases during the cooldown, and make the client disable the Buy button until the server responds with InventoryChanged or 1 second passes."},
+  {"id": "S0e", "kind": "distractor", "prompt": "Add a /help admin command that lists the available admin commands to the admin who typed it (use Log.info on the server; no new UI)."}
+ ],
+ "uncaptured_refactor_v2": [
+  "Move enemy damage from the EnemyService.DAMAGE table into Config.Enemies[kind].damage (Grunt 12, Brute 25); EnemyService reads Config; DAMAGE table removed.",
+  "Rename the remote BuyItem to PurchaseItem everywhere."
+ ]
+}

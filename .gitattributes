@@ -1,0 +1,2 @@
+bench/projects/** text eol=lf
+*.luau text eol=lf

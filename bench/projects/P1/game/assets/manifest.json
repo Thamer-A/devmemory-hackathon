@@ -1,0 +1,13 @@
+{
+  "CoinIcon": "rbxassetid://9120450011",
+  "SpeedBootsIcon": "rbxassetid://9120450127",
+  "ShieldIcon": "rbxassetid://9120450238",
+  "DoubleJumpIcon": "rbxassetid://9120450352",
+  "TrailIcon": "rbxassetid://9120450469",
+  "GruntModel": "rbxassetid://9120461105",
+  "BruteModel": "rbxassetid://9120461273",
+  "CoinModel": "rbxassetid://9120461390",
+  "CoinSound": "rbxassetid://9120472816",
+  "HitSound": "rbxassetid://9120472954",
+  "ShopBackground": "rbxassetid://9120483601"
+}
