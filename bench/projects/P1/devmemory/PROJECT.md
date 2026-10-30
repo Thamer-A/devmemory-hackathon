@@ -1,6 +1,6 @@
 # game — project map
 
-Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:23:42+00:00.
+Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:28:08+00:00.
 
 ## Rojo mapping
 - `src/shared` -> ReplicatedStorage.Shared

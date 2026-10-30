@@ -1,0 +1,15 @@
+{
+ "about": "Scripted prior sessions ('session 0') run with real headless Claude Code on the v0 project (P2/game), in order. Each is captured via devmem capture (stream-json). Their edits are committed to the project; their records become the history fixtures. After these, an UNCAPTURED human refactor (v2, applied by apply_v2.py) makes S0c/S0d memories stale.",
+ "model": "haiku",
+ "sessions": [
+  {"id": "S0a", "kind": "history-only plan (H1)", "prompt": "Let's plan a refunds feature for Ledgerly. Do NOT edit or create any files in this session; we will implement it next session. Decisions we agreed on: (1) a refund is stored as a NEGATIVE expense row linked to the original through a new nullable `refund_of` column on expenses; we never delete or edit the original expense; (2) a refund may not exceed the original amount, and attempting that must raise ConflictError; (3) reports must net refunds into the original expense's category; (4) the CLI command will be `refund EXPENSE_ID [AMOUNT]`, where AMOUNT defaults to the full original amount. Look at the relevant code and reply with a short implementation plan (which files and functions change, what the schema change is) that restates these decisions."},
+  {"id": "S0b", "kind": "decision with rationale (H2)", "prompt": "Bug report: our dates were stored in mixed formats (some 14/03/2025, some 2025-03-14), so month filters and reports silently miss rows. Decision: spent_on is always ISO YYYY-MM-DD, validated against config.DATE_FORMAT, and anything else is rejected with ValidationError. Implement that for new expenses, with tests. Follow the existing project conventions."},
+  {"id": "S0c", "kind": "becomes stale (S1)", "prompt": "Let `budget show` also print the remaining amount for each category (limit minus spent, can be negative). Note that the budgets.monthly_limit column holds the limit in cents. Add or update tests."},
+  {"id": "S0d", "kind": "becomes stale (S2)", "prompt": "Make budget_service.month_status also return the percent of the budget used, rounded down to a whole number (integer math, no floats), and show it as an extra column in `budget show`. Add or update tests."},
+  {"id": "S0e", "kind": "distractor", "prompt": "Add a `--sort-by-name` option to the `categories` command that lists the categories alphabetically instead of by id."}
+ ],
+ "uncaptured_refactor_v2": [
+  "Rename the budgets column monthly_limit -> limit_cents (schema in db.py, budget repository SQL, and every other reference including tests).",
+  "Rename budget_service.month_status -> budget_service.status_for_month (definition and all callers, including tests)."
+ ]
+}

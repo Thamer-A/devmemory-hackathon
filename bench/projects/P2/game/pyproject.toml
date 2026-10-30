@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ledgerly"
+version = "0.1.0"
+description = "A small personal expense tracker for the command line"
+requires-python = ">=3.10"
+readme = "README.md"
+
+[project.scripts]
+ledgerly = "ledgerly.cli:main"
+
+[tool.setuptools]
+packages = ["ledgerly", "ledgerly.repositories", "ledgerly.services"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -32,6 +32,18 @@ BENCH = REPO / "bench"
 RESULTS = REPO / "results"
 RUN_ROOT = Path(tempfile.gettempdir()) / "devmem-runs"
 
+
+def rmtree_force(path: Path) -> None:
+    """Remove a work dir even when git left read-only object files (Windows)."""
+    import os
+    import stat
+
+    def onexc(func, p, _exc):
+        os.chmod(p, stat.S_IWRITE)
+        func(p)
+    if Path(path).exists():
+        shutil.rmtree(path, onexc=onexc)
+
 # condition -> how context is delivered. Model is chosen separately (--models) so C4 is a
 # cross of (C3, cheap model) vs (C0/C1, strong model) from the same table.
 CONDITIONS = {
@@ -65,6 +77,7 @@ def git(work: Path, *args: str) -> str:
 def prepare_workdir(task: dict, cond: dict, run_id: str) -> Path:
     src = BENCH / "projects" / task["project"] / "game"
     work = RUN_ROOT / run_id
+    rmtree_force(work)
     shutil.copytree(src, work, ignore=shutil.ignore_patterns(".devmemory", ".git"))
     if cond["claude_md"]:
         shutil.copyfile(BENCH / "projects" / task["project"] / "CLAUDE.baseline.md", work / "CLAUDE.md")
@@ -96,6 +109,7 @@ def grade(task: dict, work: Path) -> dict:
         res = {"passed": False, "checks": {"grader_exception": False}, "error": repr(exc)[:300]}
     res["changed_files"] = changed
     res["diff_lines"] = diff.count("\n")
+    res["_diff"] = diff
     return res
 
 
@@ -110,6 +124,8 @@ def one_run(task: dict, cname: str, model: str, rep: int, suite: str, budget: in
     m = run_claude(task["prompt"], work, raw, model=model, max_turns=task.get("max_turns", 30),
                    append_system_prompt=pack_text)
     g = grade(task, work)
+    # saved diff lets any grader fix be re-applied to past runs (bench/regrade.py) without new LLM calls
+    raw.with_suffix(".diff").write_text(g.pop("_diff"), encoding="utf-8", newline="\n")
     if pack_text:
         (raw.with_suffix(".pack.md")).write_text(pack_text, encoding="utf-8")
     row = {
@@ -128,7 +144,7 @@ def one_run(task: dict, cname: str, model: str, rep: int, suite: str, budget: in
     }
     row["model"] = model  # requested alias; resolved id is in the raw stream
     if not keep:
-        shutil.rmtree(work, ignore_errors=True)
+        rmtree_force(work)
     return row
 
 

@@ -11,7 +11,12 @@ def grade(work: Path, diff: str, changed: list[str]) -> dict:
     srv_add = [l for f, ls in add.items() if f.startswith("src/server") for l in ls]
     joined = "\n".join(srv_add)
     cfg = src.get("src/shared/Config.luau", "")
-    c["grant_via_currency_reason"] = re.search(r'CurrencyService\.add\([^\n]*"daily_reward"', joined) is not None
+    # reason may be passed directly or via a constant; require both in the server code the agent added
+    c["grant_via_currency_reason"] = '"daily_reward"' in joined and "CurrencyService.add(" in joined
+    # history-only specifics (session S0a): reward = 20 base + 10 per streak day
+    all_add = "\n".join(l for f, ls in add.items() if f.endswith(".luau") for l in ls)
+    c["reward_base_20"] = re.search(r"=\s*20\b|\b20\s*\+", all_add) is not None
+    c["reward_per_day_10"] = re.search(r"=\s*10\b|\b10\s*\*|\*\s*10\b", all_add) is not None
     c["utc_day_boundary"] = (re.search(r'os\.date\(\s*"!', joined) or re.search(r"86400|ToUniversalTime|UnixTimestamp", joined)
                              or re.search(r"86400", cfg)) is not None
     c["no_local_time_day"] = re.search(r'os\.date\(\s*"\*t"', joined) is None
