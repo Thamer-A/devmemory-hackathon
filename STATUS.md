@@ -20,15 +20,12 @@
 - C3nofresh 6/6 on stale tasks: freshness flags did not change success here (agents read current code anyway).
 - C4: Sonnet C0/C1 75-81% at $0.061-0.063/success (about 11x Haiku+C3).
 
-## In progress (old)
-- Held-out set frozen (12 tasks, TOTAL 1ed3462b...). Waiting for user OK (gate c) to run it.
+## Waiting
+- Held-out set frozen (12 tasks: P1 H1–H4, P2 A1–D2; TOTAL 1ed3462b…). P2 fixture done (56 tests, 5 captured sessions, v2 refactor). Gate (c): user OK needed before the held-out run.
 
 ## Next
-- Read dev1, fix what the data says, then dev2 with 3 repeats and C3nofresh on the C tasks.
-- P2: run `make_history P2`, then `apply_v2.py`.
-- A separate agent writes and hash-freezes held-out tasks for P1 and P2. Gate (c): user OK before the held-out run.
-- C4: Haiku+C3 vs Sonnet+C0/C1 on a subset.
-- Charts, README with one-command repro, deck, video.
+- Held-out run: 12 tasks × C0, C1, C2, C3 × 3 repeats (Haiku), C3nofresh on the stale tasks, C0/C1 × 2 on Sonnet. One time only, then report as-is.
+- Charts, deck (8–10 slides), video (3 min or less), project page.
 
 ## Known issues
 - Never write Python containing `\\` escapes through a bash heredoc in this environment: backslashes get collapsed. Use the Write tool.
