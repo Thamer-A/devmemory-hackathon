@@ -99,6 +99,24 @@ function Probe.errors()
 	return out
 end
 
+-- Protocol v2 (from race step 7 on, all conditions): keep the passive test player alive so a correct
+-- game-over reset cannot hide the between-waves shop. Damage is still observed (minimum health).
+function Probe.observeAlive(duration: number)
+	local minH = math.huge
+	local conn = game:GetService("RunService").Heartbeat:Connect(function()
+		local p = Players:GetPlayers()[1]
+		local hum = p and p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+		if hum and hum.Health > 0 then
+			minH = math.min(minH, hum.Health)
+			if hum.Health < hum.MaxHealth * 0.6 then hum.Health = hum.MaxHealth end
+		end
+	end)
+	local r = HttpService:JSONDecode(Probe.observe(duration))
+	conn:Disconnect()
+	if minH ~= math.huge then r.health_min = minH end
+	return HttpService:JSONEncode(r)
+end
+
 function Probe.killPlayer()
 	local p = player()
 	local hum = p and p.Character and p.Character:FindFirstChildOfClass("Humanoid")
