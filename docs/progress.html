@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevMemory: hackathon progress</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --surface: #ffffff; --ink: #1d1d1b; --ink2: #55554f; --muted: #8a8a83;
+    --line: #e6e5e0; --accent: #2f6fd6; --accent-soft: #e8f0fc; --bar: #c9c8c1;
+    --good: #2e7d4f; --good-bg: #e7f3ec; --bad: #a33b2a; --bad-bg: #f8e9e6; --mid-bg: #f6f0dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --surface: #1f1f1d; --ink: #ecebe6; --ink2: #b9b8b1; --muted: #8d8c85;
+      --line: #33332f; --accent: #6ea2f2; --accent-soft: #1f2c42; --bar: #55544e;
+      --good: #7cc79a; --good-bg: #1d3226; --bad: #e88f7f; --bad-bg: #3a2420; --mid-bg: #3a3420;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 36px 0 10px; }
+  .sub { color: var(--ink2); margin: 0 0 20px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .gate { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 6px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .tile .num { font-size: 28px; font-weight: 650; letter-spacing: -0.5px; }
+  .tile .lbl { color: var(--ink2); font-size: 13px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .steps b { display: block; margin-bottom: 2px; }
+  .steps p { margin: 0; color: var(--ink2); font-size: 14px; }
+  .chart { position: relative; }
+  .row { display: grid; grid-template-columns: 210px 1fr 70px; align-items: center; gap: 10px; padding: 5px 0; }
+  .row .name { font-size: 14px; }
+  .row .name small { color: var(--muted); display: block; font-size: 12px; }
+  .track { height: 22px; position: relative; }
+  .fill { height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
+  .fill.hl { background: var(--accent); }
+  .row .val { font-variant-numeric: tabular-nums; font-size: 14px; text-align: right; }
+  .row:hover .fill { filter: brightness(0.92); }
+  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12.5px;
+         padding: 6px 9px; border-radius: 6px; opacity: 0; transition: opacity .1s; max-width: 260px; z-index: 5; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--ink2); font-weight: 600; font-size: 12.5px; }
+  td.c { text-align: center; }
+  .p { background: var(--good-bg); color: var(--good); border-radius: 4px; font-weight: 600; }
+  .f { background: var(--bad-bg); color: var(--bad); border-radius: 4px; font-weight: 600; }
+  .m { background: var(--mid-bg); border-radius: 4px; font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  li { margin: 4px 0; }
+  code { font-size: 13px; background: var(--line); padding: 1px 5px; border-radius: 4px; }
+  .note { color: var(--ink2); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DevMemory: hackathon progress</h1>
+  <p class="sub">HUMAIN–Misk Future AI Builders Hackathon · Challenge 2 "Deliver AI with Less Compute" · status as of Friday 30 Oct 2026</p>
+
+  <div class="gate"><b>Where things stand:</b> the dev phase is finished. The held-out test set (12 tasks) is written and hash-frozen, and it is waiting for your OK before its one-time run.</div>
+
+  <h2>What DevMemory does</h2>
+  <div class="steps">
+    <div class="card"><b>1 · Scan</b><p>Reads the project once: files, functions, the require graph, Roblox remotes, config keys, and conventions it observes in the code. <b>0 LLM tokens</b>, about 25 ms.</p></div>
+    <div class="card"><b>2 · Capture</b><p>Records each AI session through Claude Code's documented JSON output: prompts, visible replies, tool calls, edits and file hashes.</p></div>
+    <div class="card"><b>3 · Pack</b><p>For a new task, builds a small context pack (about 700 tokens) of the files, past sessions and decisions that matter, each with its source.</p></div>
+    <div class="card"><b>4 · Freshness</b><p>Compares every remembered edit with the current code line by line. When the code has since changed, the memory is flagged <b>STALE</b> instead of being trusted.</p></div>
+  </div>
+
+  <h2>Dev results: Roblox test project, 8 tasks × 3 repeats</h2>
+  <div class="tiles">
+    <div class="card tile"><div class="num">96%</div><div class="lbl">tasks passed with full DevMemory (C3), vs 88% with a hand-written CLAUDE.md</div></div>
+    <div class="card tile"><div class="num">−31%</div><div class="lbl">cost per successful task vs the CLAUDE.md baseline ($0.0053 vs $0.0077)</div></div>
+    <div class="card tile"><div class="num">−24%</div><div class="lbl">input tokens per task vs CLAUDE.md (98k vs 128k)</div></div>
+    <div class="card tile"><div class="num">~11×</div><div class="lbl">cheaper per success than Sonnet without memory, at a higher pass rate</div></div>
+  </div>
+
+  <h2>Cost per successful task</h2>
+  <p class="note">Each run's API list-price cost (not your subscription bill), summed over all runs including failures, then divided by the number of passing runs. Lower is better. All on Haiku.</p>
+  <div class="card chart" id="chart"></div>
+  <p class="note">Sonnet without memory, for scale: <b>$0.061</b> (bare, 81% pass) and <b>$0.063</b> (CLAUDE.md, 75% pass) per success. Plotted here, the Haiku bars would be too short to read.</p>
+
+  <h2>Pass rate per task</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Task</th><th>Type</th><th>C0 bare</th><th>C1 CLAUDE.md</th><th>C2 map only</th><th>C3 full</th><th>Sonnet bare</th><th>Sonnet CLAUDE.md</th></tr></thead>
+      <tbody id="matrix"></tbody>
+    </table>
+    <p class="note" style="margin:10px 0 0">Haiku has 3 runs per cell and Sonnet 2. Task types: <b>code</b> = answerable from the code · <b>history</b> = needs a decision from a past session · <b>stale</b> = a past session says something that is no longer true · <b>unrelated</b> = memory should stay out of the way.</p>
+  </div>
+
+  <h2>What the data says</h2>
+  <div class="card">
+    <ul>
+      <li><b>History is the big win.</b> B1 ("implement the daily reward we planned last session") passes <b>only</b> with full DevMemory (3/3). Every other setup goes 0/3, Sonnet included.</li>
+      <li><b>The static map alone is not enough.</b> C2 (map only, 79%) is no better than a hand-written CLAUDE.md. Still, the scanner found all 5 planted project conventions with no human effort and no LLM calls.</li>
+      <li><b>The freshness check did not change pass rates.</b> With stale flags turned off, the stale tasks still passed 6/6, because the agent reads the current code anyway. We'll report this as it is.</li>
+      <li><b>One weak spot:</b> A2 (add a shop item) sometimes misses registering the icon in the asset manifest, in every condition.</li>
+    </ul>
+  </div>
+
+  <h2>What was built today</h2>
+  <div class="card">
+    <ul>
+      <li><b>Telemetry check:</b> headless <code>claude -p</code> reports tokens, list-price cost, turns, tool calls, and even your quota meter. Runs are isolated so your settings and connectors don't leak in.</li>
+      <li><b>DevMemory CLI:</b> <code>devmem scan / run / import / pack / status / hook</code>. The hook injects the pack into normal interactive Claude Code sessions.</li>
+      <li><b>P1 "CoinRush":</b> a synthetic Roblox (Rojo/Luau) game, 27 files. It has 5 real captured past sessions and a later hand-made refactor that makes 2 of them stale.</li>
+      <li><b>P2 "ledgerly":</b> a Python app with 56 tests, built the same way and used only for held-out testing.</li>
+      <li><b>Benchmark harness:</b> automatic graders, a runner (conditions × tasks × repeats), reports, and re-grading from saved diffs.
+        <ul>
+          <li>Every grader is checked: it fails on the unmodified project and passes on a reference solution.</li>
+          <li>The held-out tasks were written by a separate agent that I never read from, then hash-frozen.</li>
+        </ul>
+      </li>
+      <li><b>Quota used:</b> about 250 runs moved your 7-day meter from 18% to 19%.</li>
+    </ul>
+  </div>
+
+  <h2>Next</h2>
+  <div class="card">
+    <ul>
+      <li><b>Held-out run (needs your OK):</b> 12 unseen tasks across both projects. 4 conditions × 3 repeats on Haiku, plus Sonnet baselines: about 200 runs, ~25 minutes, an estimated +1–2% weekly quota.</li>
+      <li>Then the charts, the 8–10 slide deck, the ≤3-minute video and the project page. Target: published by 11 AM ET Saturday.</li>
+    </ul>
+  </div>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+const bars = [
+  {name: "C3 · full DevMemory", sub: "map + past sessions + freshness", v: 0.0053, pass: "23/24 (96%)", tok: "98k", hl: true},
+  {name: "C1 · hand-written CLAUDE.md", sub: "best simple alternative", v: 0.0077, pass: "21/24 (88%)", tok: "128k"},
+  {name: "C2 · DevMemory map only", sub: "ablation: no session memory", v: 0.0079, pass: "19/24 (79%)", tok: "126k"},
+  {name: "C0 · bare session", sub: "no context", v: 0.0082, pass: "20/24 (83%)", tok: "146k"},
+];
+const max = 0.009, chart = document.getElementById("chart"), tip = document.getElementById("tip");
+for (const b of bars) {
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `<div class="name">${b.name}<small>${b.sub}</small></div>
+    <div class="track"><div class="fill${b.hl ? " hl" : ""}" style="width:${(b.v / max * 100).toFixed(1)}%"></div></div>
+    <div class="val">$${b.v.toFixed(4)}</div>`;
+  row.addEventListener("mousemove", e => {
+    tip.innerHTML = `<b>${b.name}</b><br>$${b.v.toFixed(4)} per success<br>passed ${b.pass}<br>avg input tokens ${b.tok}`;
+    tip.style.left = (e.clientX + 14) + "px"; tip.style.top = (e.clientY + 14) + "px"; tip.style.opacity = 1;
+  });
+  row.addEventListener("mouseleave", () => tip.style.opacity = 0);
+  chart.appendChild(row);
+}
+const M = [
+  ["A1 respawn remote", "code", "3/3","3/3","3/3","3/3","2/2","2/2"],
+  ["A2 shop item", "code", "2/3","3/3","1/3","2/3","1/2","0/2"],
+  ["B1 daily reward (planned last session)", "history", "0/3","0/3","0/3","3/3","0/2","0/2"],
+  ["B2 admin gift command", "history", "3/3","3/3","3/3","3/3","2/2","2/2"],
+  ["C1 Brute damage", "stale", "3/3","3/3","3/3","3/3","2/2","2/2"],
+  ["C2 purchase confirm dialog", "stale", "3/3","3/3","3/3","3/3","2/2","2/2"],
+  ["D1 MathUtil.lerp", "unrelated", "3/3","3/3","3/3","3/3","2/2","2/2"],
+  ["D2 README rojo serve", "unrelated", "3/3","3/3","3/3","3/3","2/2","2/2"],
+];
+const tb = document.getElementById("matrix");
+for (const r of M) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${r[0]}</td><td>${r[1]}</td>` + r.slice(2).map(c => {
+    const [k, n] = c.split("/").map(Number);
+    return `<td class="c"><span class="${k === n ? "p" : k === 0 ? "f" : "m"}" style="padding:2px 7px">${c}</span></td>`;
+  }).join("");
+  tb.appendChild(tr);
+}
+</script>
+</body>
+</html>
