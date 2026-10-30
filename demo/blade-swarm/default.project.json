@@ -22,6 +22,54 @@
           "$path": "src/client"
         }
       }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "Arena": {
+        "$className": "Folder",
+        "Floor": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Size": [180, 4, 180], "Position": [0, -2, 0],
+            "Material": "Grass", "Color": [0.33, 0.55, 0.27], "TopSurface": "Smooth"
+          }
+        },
+        "WallNorth": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Size": [184, 8, 4], "Position": [0, 4, -92],
+            "Material": "Slate", "Color": [0.35, 0.36, 0.4]
+          }
+        },
+        "WallSouth": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Size": [184, 8, 4], "Position": [0, 4, 92],
+            "Material": "Slate", "Color": [0.35, 0.36, 0.4]
+          }
+        },
+        "WallEast": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Size": [4, 8, 184], "Position": [92, 4, 0],
+            "Material": "Slate", "Color": [0.35, 0.36, 0.4]
+          }
+        },
+        "WallWest": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true, "Size": [4, 8, 184], "Position": [-92, 4, 0],
+            "Material": "Slate", "Color": [0.35, 0.36, 0.4]
+          }
+        }
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true, "Size": [10, 1, 10], "Position": [0, 0.5, 0],
+          "Duration": 0, "Material": "SmoothPlastic", "Color": [0.2, 0.75, 0.9]
+        }
+      }
     }
   }
 }
