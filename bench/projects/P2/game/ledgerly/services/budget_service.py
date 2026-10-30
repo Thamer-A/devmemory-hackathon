@@ -38,7 +38,7 @@ def set_budget(conn: sqlite3.Connection, category_name: str, amount_text: str) -
     return cents
 
 
-def month_status(conn: sqlite3.Connection, category_name: str, month: str) -> BudgetStatus:
+def status_for_month(conn: sqlite3.Connection, category_name: str, month: str) -> BudgetStatus:
     validate_month(month)
     category = category_service.require_category(conn, category_name)
     limit = budget_repo.get_limit(conn, category["id"])
@@ -50,4 +50,4 @@ def month_status(conn: sqlite3.Connection, category_name: str, month: str) -> Bu
 
 def all_statuses(conn: sqlite3.Connection, month: str) -> list[BudgetStatus]:
     validate_month(month)
-    return [month_status(conn, row["category"], month) for row in budget_repo.list_limits(conn)]
+    return [status_for_month(conn, row["category"], month) for row in budget_repo.list_limits(conn)]

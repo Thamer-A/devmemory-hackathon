@@ -24,7 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on);
 CREATE TABLE IF NOT EXISTS budgets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_id INTEGER NOT NULL UNIQUE REFERENCES categories(id),
-    monthly_limit INTEGER NOT NULL
+    limit_cents INTEGER NOT NULL
 );
 """
 
