@@ -117,6 +117,27 @@ function Probe.observeAlive(duration: number)
 	return HttpService:JSONEncode(r)
 end
 
+-- Protocol v3 (from P12/P13 on, all conditions): the test player walks a slow 22-stud circle like a
+-- real player would; a standing player let zombies park inside the blade orbit, so waves never ended.
+function Probe.observeKite(duration: number)
+	local running = true
+	task.spawn(function()
+		local a = 0
+		while running do
+			local p = Players:GetPlayers()[1]
+			local hum = p and p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+			if hum and hum.Health > 0 then
+				a += 0.35
+				hum:MoveTo(Vector3.new(math.cos(a) * 22, 0, math.sin(a) * 22))
+			end
+			task.wait(0.5)
+		end
+	end)
+	local r = Probe.observeAlive(duration)
+	running = false
+	return r
+end
+
 function Probe.killPlayer()
 	local p = player()
 	local hum = p and p.Character and p.Character:FindFirstChildOfClass("Humanoid")
