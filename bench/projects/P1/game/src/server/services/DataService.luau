@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
+local ItemCatalog = require(Shared.ItemCatalog)
 local Log = require(Shared.Log)
 local Remotes = require(Shared.Remotes)
 local Signal = require(Shared.Signal)
@@ -35,6 +36,39 @@ local function keyFor(player: Player): string
 	return "Player_" .. tostring(player.UserId)
 end
 
+-- Older saves stored item names instead of ids. 'Speed Coil' was renamed to 'Speed Boots'.
+local LEGACY_ITEM_IDS: { [string]: number } = {
+	["Speed Coil"] = 1,
+}
+
+-- Returns the item id for a saved entry, or nil if it does not match anything in the catalog.
+local function migrateItemId(value: any): number?
+	if type(value) == "number" then
+		return if ItemCatalog.getById(value) then value else nil
+	end
+	if type(value) == "string" then
+		local item = ItemCatalog.getByName(value)
+		if item then
+			return item.id
+		end
+		return LEGACY_ITEM_IDS[value]
+	end
+	return nil
+end
+
+local function migrateInventory(saved: { any }): { number }
+	local inventory: { number } = {}
+	for _, entry in saved do
+		local itemId = migrateItemId(entry)
+		if itemId == nil then
+			Log.warn("DataService", "dropping unknown inventory item", entry)
+		elseif not table.find(inventory, itemId) then
+			table.insert(inventory, itemId)
+		end
+	end
+	return inventory
+end
+
 -- Fill in any fields missing from older saves.
 local function reconcile(data: any): PlayerData
 	local template = defaultData()
@@ -46,6 +80,15 @@ local function reconcile(data: any): PlayerData
 	end
 	if type(data.inventory) ~= "table" then
 		data.inventory = template.inventory
+	else
+		data.inventory = migrateInventory(data.inventory)
+	end
+	if data.equipped ~= nil then
+		local equippedId = migrateItemId(data.equipped)
+		if equippedId == nil then
+			Log.warn("DataService", "dropping unknown equipped item", data.equipped)
+		end
+		data.equipped = if equippedId and table.find(data.inventory, equippedId) then equippedId else nil
 	end
 	if type(data.stats) ~= "table" then
 		data.stats = template.stats
@@ -132,37 +175,37 @@ function DataService.markDirty(player: Player)
 	dirty[player] = true
 end
 
-function DataService.hasItem(player: Player, itemName: string): boolean
+function DataService.hasItem(player: Player, itemId: number): boolean
 	local data = sessions[player]
 	if data == nil then
 		return false
 	end
-	return table.find(data.inventory, itemName) ~= nil
+	return table.find(data.inventory, itemId) ~= nil
 end
 
-function DataService.addItem(player: Player, itemName: string): boolean
+function DataService.addItem(player: Player, itemId: number): boolean
 	local data = sessions[player]
 	if data == nil then
 		return false
 	end
-	if table.find(data.inventory, itemName) then
+	if table.find(data.inventory, itemId) then
 		return false
 	end
-	table.insert(data.inventory, itemName)
+	table.insert(data.inventory, itemId)
 	dirty[player] = true
 	pushInventory(player)
 	return true
 end
 
-function DataService.setEquipped(player: Player, itemName: string?): boolean
+function DataService.setEquipped(player: Player, itemId: number?): boolean
 	local data = sessions[player]
 	if data == nil then
 		return false
 	end
-	if itemName ~= nil and not table.find(data.inventory, itemName) then
+	if itemId ~= nil and not table.find(data.inventory, itemId) then
 		return false
 	end
-	data.equipped = itemName
+	data.equipped = itemId
 	dirty[player] = true
 	pushInventory(player)
 	return true

@@ -14,8 +14,8 @@ local ROW_HEIGHT = 56
 
 local list: ScrollingFrame
 local emptyLabel: TextLabel
-local inventory: { string } = {}
-local equipped: string? = nil
+local inventory: { number } = {}
+local equipped: number? = nil
 
 local function clearRows()
 	for _, child in list:GetChildren() do
@@ -26,7 +26,7 @@ local function clearRows()
 end
 
 local function buildRow(item, order: number)
-	local isEquipped = equipped == item.name
+	local isEquipped = equipped == item.id
 
 	local row = Instance.new("Frame")
 	row.Name = item.name
@@ -65,8 +65,8 @@ local function render()
 	clearRows()
 	emptyLabel.Visible = #inventory == 0
 
-	for index, name in inventory do
-		local item = ItemCatalog.getByName(name)
+	for index, itemId in inventory do
+		local item = ItemCatalog.getById(itemId)
 		if item then
 			buildRow(item, index)
 		end
@@ -104,9 +104,9 @@ function InventoryController.init()
 end
 
 function InventoryController.start()
-	Remotes.get("InventoryChanged").OnClientEvent:Connect(function(items: { string }, equippedName: string?)
+	Remotes.get("InventoryChanged").OnClientEvent:Connect(function(items: { number }, equippedId: number?)
 		inventory = items
-		equipped = equippedName
+		equipped = equippedId
 		render()
 	end)
 	render()

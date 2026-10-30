@@ -12,15 +12,25 @@ local ShopController = {}
 
 local PANEL_NAME = "Shop"
 local ROW_HEIGHT = 64
+-- Re-enable Buy after this long if the server never answers with InventoryChanged (e.g. the request was rejected).
+local BUY_TIMEOUT = 1
 
-local owned: { [string]: boolean } = {}
-local buttons: { [string]: TextButton } = {}
+local owned: { [number]: boolean } = {}
+local buttons: { [number]: TextButton } = {}
+-- Item id -> token of the purchase request still waiting on the server.
+local pending: { [number]: number } = {}
+local requestCount = 0
 
 local function refreshButtons()
 	local theme = UIController.getTheme()
-	for name, button in buttons do
-		if owned[name] then
+	for itemId, button in buttons do
+		if owned[itemId] then
 			button.Text = "Owned"
+			button.Active = false
+			button.BackgroundColor3 = Color3.fromRGB(80, 80, 88)
+			button.TextColor3 = Color3.fromRGB(160, 160, 170)
+		elseif pending[itemId] then
+			button.Text = "Buying"
 			button.Active = false
 			button.BackgroundColor3 = Color3.fromRGB(80, 80, 88)
 			button.TextColor3 = Color3.fromRGB(160, 160, 170)
@@ -31,6 +41,25 @@ local function refreshButtons()
 			button.TextColor3 = theme.text
 		end
 	end
+end
+
+local function requestPurchase(itemId: number)
+	if owned[itemId] or pending[itemId] then
+		return
+	end
+
+	requestCount += 1
+	local token = requestCount
+	pending[itemId] = token
+	refreshButtons()
+	Remotes.get("BuyItem"):FireServer(itemId)
+
+	task.delay(BUY_TIMEOUT, function()
+		if pending[itemId] == token then
+			pending[itemId] = nil
+			refreshButtons()
+		end
+	end)
 end
 
 local function buildRow(list: ScrollingFrame, item, order: number)
@@ -65,10 +94,10 @@ local function buildRow(list: ScrollingFrame, item, order: number)
 	priceLabel.TextColor3 = Color3.fromRGB(255, 205, 40)
 
 	local button = UIController.createButton(row, "Buy", function()
-		Remotes.get("BuyItem"):FireServer(item.id)
+		requestPurchase(item.id)
 	end)
 	button.Position = UDim2.new(1, -108, 0.5, -16)
-	buttons[item.name] = button
+	buttons[item.id] = button
 end
 
 local function buildPanel()
@@ -116,11 +145,12 @@ function ShopController.init()
 end
 
 function ShopController.start()
-	Remotes.get("InventoryChanged").OnClientEvent:Connect(function(inventory: { string })
+	Remotes.get("InventoryChanged").OnClientEvent:Connect(function(inventory: { number })
 		owned = {}
-		for _, name in inventory do
-			owned[name] = true
+		for _, itemId in inventory do
+			owned[itemId] = true
 		end
+		table.clear(pending)
 		refreshButtons()
 	end)
 end

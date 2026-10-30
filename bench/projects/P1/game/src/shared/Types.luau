@@ -6,8 +6,8 @@ export type PlayerStats = {
 
 export type PlayerData = {
 	coins: number,
-	inventory: { string },
-	equipped: string?,
+	inventory: { number },
+	equipped: number?,
 	stats: PlayerStats,
 }
 

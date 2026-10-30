@@ -32,7 +32,7 @@ local function applyEquipped(player: Player)
 	local speed = Config.BaseWalkSpeed
 	local data = DataService.get(player)
 	if data and data.equipped then
-		local item = ItemCatalog.getByName(data.equipped)
+		local item = ItemCatalog.getById(data.equipped)
 		if item and item.stats and item.stats.walkSpeedBonus then
 			speed += item.stats.walkSpeedBonus
 		end
@@ -57,7 +57,7 @@ local function onBuyItem(player: Player, itemId: any)
 		return
 	end
 
-	if DataService.hasItem(player, item.name) then
+	if DataService.hasItem(player, item.id) then
 		return
 	end
 
@@ -66,7 +66,7 @@ local function onBuyItem(player: Player, itemId: any)
 	end
 
 	CurrencyService.add(player, -item.price, "shop_purchase")
-	DataService.addItem(player, item.name)
+	DataService.addItem(player, item.id)
 	Log.info("ShopService", player.Name, "bought", item.name)
 end
 
@@ -81,11 +81,11 @@ local function onEquipItem(player: Player, itemId: any)
 	end
 
 	local item = ItemCatalog.getById(itemId)
-	if item == nil or not DataService.hasItem(player, item.name) then
+	if item == nil or not DataService.hasItem(player, item.id) then
 		return
 	end
 
-	if DataService.setEquipped(player, item.name) then
+	if DataService.setEquipped(player, item.id) then
 		applyEquipped(player)
 	end
 end

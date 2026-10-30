@@ -15,7 +15,7 @@ local DataService = require(script.Parent.DataService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
 local RoundService = require(script.Parent.RoundService)
 
-local DAMAGE = { Grunt = 10, Brute = 25 }
+local DAMAGE = { Grunt = 12, Brute = 25 }
 
 local EnemyService = {}
 EnemyService.DAMAGE = DAMAGE

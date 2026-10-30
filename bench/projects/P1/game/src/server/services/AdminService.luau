@@ -93,6 +93,19 @@ local function registerDefaults()
 		Log.info("AdminService", admin.Name, "kicked", target.Name, "-", reason)
 		target:Kick(reason)
 	end)
+
+	AdminService.register("help", "/help", function(admin)
+		local names = {}
+		for name in pairs(commands) do
+			table.insert(names, name)
+		end
+		table.sort(names)
+
+		Log.info("AdminService", admin.Name, "requested the command list:")
+		for _, name in names do
+			Log.info("AdminService", commands[name].usage)
+		end
+	end)
 end
 
 local function watchPlayer(player: Player)
