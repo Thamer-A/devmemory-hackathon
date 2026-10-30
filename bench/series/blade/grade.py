@@ -64,7 +64,7 @@ def grade(work: Path) -> dict:
         "health_growth_10pct_after_s7": _line_with(src, ["health"], r"\b(1\.10?|0\.10?)\b") or
                                         _any(src, r"\b\w*(growth|scal|mult)\w*\s*=\s*(1\.10?|0\.10?)\b"),
         "coins_per_kill_10_after_s7": _any(src, r"\b\w*coin\w*\s*=\s*10\b"),
-        "game_over_resets_to_wave_1": _any(src, r"game\s*over|gameover") and _any(src, r"wave\w*\s*=\s*1\b"),
+        "game_over_resets_to_wave_1": _any(src, r"game\s*over|gameover") and _any(src, r"wave\w*\s*=\s*[01]\b"),  # 0 then ++ also starts wave 1
         # S4 (+S6)
         "upgrade_names_all": all(_any(src, re.escape(n)) for n in
                                  ["Sharper Blades", "Faster Spin", "Longer Reach", "Vitality", "Vampiric", "Greed", "Twin Spin"]),
