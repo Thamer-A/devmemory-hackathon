@@ -1,0 +1,75 @@
+{
+  "name": "CoinRush (demo place)",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "build/src/shared",
+        "AssetManifest": {
+          "$path": "build/assets/manifest.json"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": {
+        "$path": "build/src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": {
+          "$path": "build/src/client"
+        }
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "Baseplate": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "Size": [256, 4, 256],
+          "Position": [0, -2, 0],
+          "Material": "Grass",
+          "Color": [0.36, 0.6, 0.3],
+          "TopSurface": "Smooth"
+        }
+      },
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Size": [8, 1, 8],
+          "Position": [0, 0.5, 0],
+          "Duration": 0
+        }
+      },
+      "CoinZone": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "CanCollide": false,
+          "CanTouch": false,
+          "Transparency": 1,
+          "Size": [100, 1, 100],
+          "Position": [0, 2, 0]
+        }
+      },
+      "EnemySpawns": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "CanCollide": false,
+          "CanTouch": false,
+          "Transparency": 1,
+          "Size": [60, 1, 20],
+          "Position": [0, 3, 70]
+        }
+      }
+    }
+  }
+}

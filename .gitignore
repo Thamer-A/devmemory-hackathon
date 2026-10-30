@@ -4,3 +4,4 @@ __pycache__/
 .devmemory/cache/
 results/raw/
 *.log
+demo/build/
