@@ -3,6 +3,6 @@
  "project": "P1",
  "type": "code",
  "split": "dev",
- "prompt": "Add a RequestRespawn remote: the client can fire it, and the server then respawns that player after a configurable delay.",
+ "prompt": "Add a RequestRespawn remote: pressing R on the client fires it, and the server then respawns that player after a configurable delay.",
  "max_turns": 30
 }

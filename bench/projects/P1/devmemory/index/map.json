@@ -1,0 +1,1031 @@
+{
+ "project": "game",
+ "scanned_at": "2026-10-30T18:23:42+00:00",
+ "llm_tokens_used": 0,
+ "files": {
+  "README.md": {
+   "lang": "text",
+   "module": "README",
+   "symbols": [],
+   "deps": [],
+   "hash": "f40f7ed469e2f082",
+   "lines": 20,
+   "bytes": 803
+  },
+  "default.project.json": {
+   "lang": "text",
+   "module": "default",
+   "symbols": [],
+   "deps": [],
+   "hash": "6db782395f0c8241",
+   "lines": 31,
+   "bytes": 633
+  },
+  "assets/manifest.json": {
+   "lang": "text",
+   "module": "manifest",
+   "symbols": [],
+   "deps": [],
+   "hash": "a66509c14c92e023",
+   "lines": 14,
+   "bytes": 481
+  },
+  "src/client/Main.client.luau": {
+   "lang": "luau",
+   "module": "Main",
+   "symbols": [],
+   "deps": [
+    "Log"
+   ],
+   "kind": "client-script",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "076eaa365467b831",
+   "lines": 39,
+   "bytes": 768
+  },
+  "src/client/controllers/HUDController.luau": {
+   "lang": "luau",
+   "module": "HUDController",
+   "symbols": [
+    "HUDController.init",
+    "HUDController.start"
+   ],
+   "deps": [
+    "Assets",
+    "MathUtil",
+    "Remotes",
+    "UIController"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "buildCoinCounter",
+    "buildFlash",
+    "buildRoundLabel",
+    "formatTime",
+    "playHitFlash"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "CoinsChanged": [
+     "OnClientEvent"
+    ],
+    "EnemyHit": [
+     "OnClientEvent"
+    ],
+    "RoundState": [
+     "OnClientEvent"
+    ]
+   },
+   "assets": [
+    "CoinIcon"
+   ],
+   "config_keys_used": [],
+   "hash": "0945ac3131a850b3",
+   "lines": 99,
+   "bytes": 2707
+  },
+  "src/client/controllers/InputController.luau": {
+   "lang": "luau",
+   "module": "InputController",
+   "symbols": [
+    "InputController.init",
+    "InputController.start"
+   ],
+   "deps": [
+    "UIController"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "makeHandler"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "a45c6f09f86c8521",
+   "lines": 29,
+   "bytes": 887
+  },
+  "src/client/controllers/InventoryController.luau": {
+   "lang": "luau",
+   "module": "InventoryController",
+   "symbols": [
+    "InventoryController.init",
+    "InventoryController.start"
+   ],
+   "deps": [
+    "Assets",
+    "ItemCatalog",
+    "Remotes",
+    "UIController"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "buildRow",
+    "clearRows",
+    "render"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "EquipItem": [
+     "FireServer"
+    ],
+    "InventoryChanged": [
+     "OnClientEvent"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "d4d972c0b62f6394",
+   "lines": 116,
+   "bytes": 3134
+  },
+  "src/client/controllers/ShopController.luau": {
+   "lang": "luau",
+   "module": "ShopController",
+   "symbols": [
+    "ShopController.init",
+    "ShopController.start"
+   ],
+   "deps": [
+    "Assets",
+    "ItemCatalog",
+    "MathUtil",
+    "Remotes",
+    "UIController"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "buildPanel",
+    "buildRow",
+    "refreshButtons",
+    "requestPurchase"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "InventoryChanged": [
+     "OnClientEvent"
+    ],
+    "PurchaseItem": [
+     "FireServer"
+    ]
+   },
+   "assets": [
+    "ShopBackground"
+   ],
+   "config_keys_used": [],
+   "hash": "f4132d4081fd041f",
+   "lines": 159,
+   "bytes": 4535
+  },
+  "src/client/controllers/UIController.luau": {
+   "lang": "luau",
+   "module": "UIController",
+   "symbols": [
+    "UIController.createButton",
+    "UIController.createLabel",
+    "UIController.createPanel",
+    "UIController.getPanel",
+    "UIController.getRoot",
+    "UIController.getTheme",
+    "UIController.init",
+    "UIController.toggle"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "76b84fd98697dbac",
+   "lines": 135,
+   "bytes": 3186
+  },
+  "src/server/Main.server.luau": {
+   "lang": "luau",
+   "module": "Main",
+   "symbols": [],
+   "deps": [
+    "Log",
+    "Remotes"
+   ],
+   "kind": "server-script",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "4fc37deaad9f2541",
+   "lines": 53,
+   "bytes": 1234
+  },
+  "src/server/services/AdminService.luau": {
+   "lang": "luau",
+   "module": "AdminService",
+   "symbols": [
+    "AdminService.init",
+    "AdminService.register",
+    "AdminService.start"
+   ],
+   "deps": [
+    "Config",
+    "CurrencyService",
+    "Log"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "dispatch",
+    "findPlayer",
+    "isAdmin",
+    "registerDefaults",
+    "split",
+    "watchPlayer"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "AdminPrefix",
+    "Admins"
+   ],
+   "hash": "ff00ef6c3a05dc91",
+   "lines": 132,
+   "bytes": 3466
+  },
+  "src/server/services/CoinPickupService.luau": {
+   "lang": "luau",
+   "module": "CoinPickupService",
+   "symbols": [
+    "CoinPickupService.getCoinCount",
+    "CoinPickupService.init",
+    "CoinPickupService.start"
+   ],
+   "deps": [
+    "Assets",
+    "Config",
+    "CurrencyService",
+    "Log",
+    "MathUtil",
+    "RoundService"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "clearCoins",
+    "createCoin",
+    "getFolder",
+    "playPickupSound",
+    "removeCoin",
+    "spawnCoin",
+    "spawnPosition",
+    "startSpawning",
+    "startSpinning"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [
+    "CoinSound"
+   ],
+   "config_keys_used": [
+    "CoinColor",
+    "CoinHeightOffset",
+    "CoinPickupValue",
+    "CoinSize",
+    "CoinSpawnInterval",
+    "CoinSpinSpeed",
+    "CoinZoneName",
+    "MaxCoinsInWorld"
+   ],
+   "hash": "29c3c919355ef16a",
+   "lines": 182,
+   "bytes": 4080
+  },
+  "src/server/services/CurrencyService.luau": {
+   "lang": "luau",
+   "module": "CurrencyService",
+   "symbols": [
+    "CurrencyService.add",
+    "CurrencyService.canAfford",
+    "CurrencyService.get",
+    "CurrencyService.init"
+   ],
+   "deps": [
+    "Config",
+    "DataService",
+    "LeaderboardService",
+    "Log",
+    "MathUtil",
+    "Remotes"
+   ],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {
+    "CoinsChanged": [
+     "FireClient"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [
+    "MaxCoins"
+   ],
+   "hash": "5dfa966917d66752",
+   "lines": 60,
+   "bytes": 1823
+  },
+  "src/server/services/DataService.luau": {
+   "lang": "luau",
+   "module": "DataService",
+   "symbols": [
+    "DataService.addItem",
+    "DataService.get",
+    "DataService.hasItem",
+    "DataService.incrementStat",
+    "DataService.init",
+    "DataService.markDirty",
+    "DataService.save",
+    "DataService.setEquipped",
+    "DataService.start"
+   ],
+   "deps": [
+    "Config",
+    "ItemCatalog",
+    "Log",
+    "Remotes",
+    "Signal",
+    "Types"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "defaultData",
+    "keyFor",
+    "loadData",
+    "migrateInventory",
+    "migrateItemId",
+    "onPlayerAdded",
+    "onPlayerRemoving",
+    "pushInventory",
+    "reconcile",
+    "saveData"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "InventoryChanged": [
+     "FireClient"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [
+    "AutosaveInterval",
+    "DataLoadRetries",
+    "DataRetryDelay",
+    "DataStoreName",
+    "StartingCoins"
+   ],
+   "hash": "7bda393beece54fc",
+   "lines": 271,
+   "bytes": 6533
+  },
+  "src/server/services/EnemyService.luau": {
+   "lang": "luau",
+   "module": "EnemyService",
+   "symbols": [
+    "EnemyService.getEnemyCount",
+    "EnemyService.init"
+   ],
+   "deps": [
+    "Assets",
+    "Config",
+    "CurrencyService",
+    "DataService",
+    "LeaderboardService",
+    "Log",
+    "Maid",
+    "MathUtil",
+    "Remotes",
+    "RoundService"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "aiStep",
+    "buildPlaceholder",
+    "chooseKind",
+    "clearEnemies",
+    "countEnemies",
+    "creditKill",
+    "getFolder",
+    "loadModel",
+    "nearestPlayerRoot",
+    "onEnemyTouched",
+    "pickSpawnPosition",
+    "removeEnemy",
+    "spawnEnemy",
+    "spawnLoop"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "EnemyHit": [
+     "FireClient"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [
+    "BruteSpawnChance",
+    "Enemies",
+    "EnemyAiInterval",
+    "EnemyHitCooldown",
+    "EnemyPlaceholderColors",
+    "EnemyPlaceholderSize",
+    "EnemySpawnInterval",
+    "EnemySpawnZoneName",
+    "KillReward",
+    "MaxEnemies",
+    "PlayerAttackCooldown",
+    "PlayerAttackDamage"
+   ],
+   "hash": "583c070cad0b3be5",
+   "lines": 303,
+   "bytes": 7616
+  },
+  "src/server/services/LeaderboardService.luau": {
+   "lang": "luau",
+   "module": "LeaderboardService",
+   "symbols": [
+    "LeaderboardService.init",
+    "LeaderboardService.set",
+    "LeaderboardService.start"
+   ],
+   "deps": [
+    "DataService",
+    "Log"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "ensureFolder",
+    "syncFromData"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "030c940ca4d5a351",
+   "lines": 66,
+   "bytes": 1623
+  },
+  "src/server/services/RoundService.luau": {
+   "lang": "luau",
+   "module": "RoundService",
+   "symbols": [
+    "RoundService.getState",
+    "RoundService.getTimeLeft",
+    "RoundService.init",
+    "RoundService.isPlaying",
+    "RoundService.start"
+   ],
+   "deps": [
+    "Config",
+    "CurrencyService",
+    "DataService",
+    "Log",
+    "Remotes",
+    "Signal"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "beginRound",
+    "broadcast",
+    "endRound",
+    "isAlive",
+    "setState"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "RoundState": [
+     "FireAllClients",
+     "FireClient"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [
+    "IntermissionLength",
+    "RoundLength",
+    "RoundRewardCoins"
+   ],
+   "hash": "320d16519ca7bdb2",
+   "lines": 110,
+   "bytes": 2609
+  },
+  "src/server/services/ShopService.luau": {
+   "lang": "luau",
+   "module": "ShopService",
+   "symbols": [
+    "ShopService.init",
+    "ShopService.start"
+   ],
+   "deps": [
+    "Config",
+    "CurrencyService",
+    "DataService",
+    "ItemCatalog",
+    "Log",
+    "Remotes"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "applyEquipped",
+    "isOnCooldown",
+    "onCharacterAdded",
+    "onEquipItem",
+    "onPurchaseItem",
+    "watchPlayer"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {
+    "EquipItem": [
+     "OnServerEvent"
+    ],
+    "PurchaseItem": [
+     "OnServerEvent"
+    ]
+   },
+   "assets": [],
+   "config_keys_used": [
+    "BaseWalkSpeed",
+    "PurchaseCooldown"
+   ],
+   "hash": "1ceb9d261bfa8a9f",
+   "lines": 121,
+   "bytes": 2969
+  },
+  "src/shared/Assets.luau": {
+   "lang": "luau",
+   "module": "Assets",
+   "symbols": [
+    "Assets.get",
+    "Assets.getNumericId",
+    "Assets.has"
+   ],
+   "deps": [
+    "AssetManifest",
+    "Log"
+   ],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "a7de88a71bfed249",
+   "lines": 32,
+   "bytes": 694
+  },
+  "src/shared/Config.luau": {
+   "lang": "luau",
+   "module": "Config",
+   "symbols": [],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "config_keys": [
+    "StartingCoins",
+    "MaxCoins",
+    "CoinPickupValue",
+    "RoundRewardCoins",
+    "KillReward",
+    "PurchaseCooldown",
+    "CoinSpawnInterval",
+    "MaxCoinsInWorld",
+    "CoinZoneName",
+    "CoinSize",
+    "CoinHeightOffset",
+    "CoinSpinSpeed",
+    "CoinColor",
+    "RoundLength",
+    "IntermissionLength",
+    "DataStoreName",
+    "AutosaveInterval",
+    "DataLoadRetries",
+    "DataRetryDelay",
+    "BaseWalkSpeed",
+    "PlayerAttackDamage",
+    "PlayerAttackCooldown",
+    "Enemies",
+    "Grunt",
+    "Brute",
+    "EnemySpawnInterval",
+    "MaxEnemies",
+    "EnemyAiInterval",
+    "EnemyHitCooldown",
+    "EnemySpawnZoneName",
+    "BruteSpawnChance",
+    "EnemyPlaceholderSize",
+    "EnemyPlaceholderColors",
+    "Admins",
+    "AdminPrefix"
+   ],
+   "hash": "b957af7dd140bef7",
+   "lines": 61,
+   "bytes": 1294
+  },
+  "src/shared/ItemCatalog.luau": {
+   "lang": "luau",
+   "module": "ItemCatalog",
+   "symbols": [
+    "ItemCatalog.all",
+    "ItemCatalog.getById",
+    "ItemCatalog.getByName"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "ce6f1f7a51a66653",
+   "lines": 73,
+   "bytes": 1316
+  },
+  "src/shared/Log.luau": {
+   "lang": "luau",
+   "module": "Log",
+   "symbols": [
+    "Log.error",
+    "Log.info",
+    "Log.warn"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [
+    "format"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "adc0a4dadfe618d2",
+   "lines": 26,
+   "bytes": 514
+  },
+  "src/shared/Maid.luau": {
+   "lang": "luau",
+   "module": "Maid",
+   "symbols": [
+    "Maid.new",
+    "Maid:Clean",
+    "Maid:Give"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "dd875f5dc211b8e4",
+   "lines": 39,
+   "bytes": 790
+  },
+  "src/shared/MathUtil.luau": {
+   "lang": "luau",
+   "module": "MathUtil",
+   "symbols": [
+    "MathUtil.clamp",
+    "MathUtil.formatNumber",
+    "MathUtil.randomPointInPart",
+    "MathUtil.round"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "b4f4248846333413",
+   "lines": 36,
+   "bytes": 872
+  },
+  "src/shared/Remotes.luau": {
+   "lang": "luau",
+   "module": "Remotes",
+   "symbols": [
+    "Remotes.define",
+    "Remotes.get"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [
+    "getFolder"
+   ],
+   "remotes_defined": [
+    "CoinsChanged",
+    "EnemyHit",
+    "EquipItem",
+    "InventoryChanged",
+    "PurchaseItem",
+    "RoundState"
+   ],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "13f13192b8fb04bb",
+   "lines": 65,
+   "bytes": 1467
+  },
+  "src/shared/Signal.luau": {
+   "lang": "luau",
+   "module": "Signal",
+   "symbols": [
+    "Connection.new",
+    "Connection:Disconnect",
+    "Signal.new",
+    "Signal:Connect",
+    "Signal:DisconnectAll",
+    "Signal:Fire",
+    "Signal:Once",
+    "Signal:Wait"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "76ef260eb0aec4b4",
+   "lines": 79,
+   "bytes": 1586
+  },
+  "src/shared/Types.luau": {
+   "lang": "luau",
+   "module": "Types",
+   "symbols": [],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "05054f55290d7056",
+   "lines": 22,
+   "bytes": 309
+  }
+ },
+ "engine": "roblox (rojo)",
+ "rojo": {
+  "src/shared": "ReplicatedStorage.Shared",
+  "assets/manifest.json": "ReplicatedStorage.Shared.AssetManifest",
+  "src/server": "ServerScriptService.Server",
+  "src/client": "StarterPlayer.StarterPlayerScripts.Client"
+ },
+ "conventions": {
+  "hub_apis": [
+   {
+    "api": "Log.warn",
+    "callers": 10,
+    "files": [
+     "src/client/Main.client.luau",
+     "src/server/Main.server.luau",
+     "src/server/services/AdminService.luau",
+     "src/server/services/CoinPickupService.luau",
+     "src/server/services/CurrencyService.luau",
+     "src/server/services/DataService.luau",
+     "src/server/services/EnemyService.luau",
+     "src/server/services/LeaderboardService.luau",
+     "src/server/services/ShopService.luau",
+     "src/shared/Assets.luau"
+    ]
+   },
+   {
+    "api": "Remotes.get",
+    "callers": 8,
+    "files": [
+     "src/client/controllers/HUDController.luau",
+     "src/client/controllers/InventoryController.luau",
+     "src/client/controllers/ShopController.luau",
+     "src/server/services/CurrencyService.luau",
+     "src/server/services/DataService.luau",
+     "src/server/services/EnemyService.luau",
+     "src/server/services/RoundService.luau",
+     "src/server/services/ShopService.luau"
+    ]
+   },
+   {
+    "api": "Log.info",
+    "callers": 7,
+    "files": [
+     "src/client/Main.client.luau",
+     "src/server/Main.server.luau",
+     "src/server/services/AdminService.luau",
+     "src/server/services/CurrencyService.luau",
+     "src/server/services/DataService.luau",
+     "src/server/services/RoundService.luau",
+     "src/server/services/ShopService.luau"
+    ]
+   },
+   {
+    "api": "CurrencyService.add",
+    "callers": 5,
+    "files": [
+     "src/server/services/AdminService.luau",
+     "src/server/services/CoinPickupService.luau",
+     "src/server/services/EnemyService.luau",
+     "src/server/services/RoundService.luau",
+     "src/server/services/ShopService.luau"
+    ]
+   },
+   {
+    "api": "Assets.get",
+    "callers": 4,
+    "files": [
+     "src/client/controllers/HUDController.luau",
+     "src/client/controllers/InventoryController.luau",
+     "src/client/controllers/ShopController.luau",
+     "src/server/services/CoinPickupService.luau"
+    ]
+   },
+   {
+    "api": "UIController.createLabel",
+    "callers": 3,
+    "files": [
+     "src/client/controllers/HUDController.luau",
+     "src/client/controllers/InventoryController.luau",
+     "src/client/controllers/ShopController.luau"
+    ]
+   },
+   {
+    "api": "UIController.createPanel",
+    "callers": 3,
+    "files": [
+     "src/client/controllers/HUDController.luau",
+     "src/client/controllers/InventoryController.luau",
+     "src/client/controllers/ShopController.luau"
+    ]
+   },
+   {
+    "api": "ItemCatalog.getById",
+    "callers": 3,
+    "files": [
+     "src/client/controllers/InventoryController.luau",
+     "src/server/services/DataService.luau",
+     "src/server/services/ShopService.luau"
+    ]
+   },
+   {
+    "api": "DataService.get",
+    "callers": 3,
+    "files": [
+     "src/server/services/CurrencyService.luau",
+     "src/server/services/LeaderboardService.luau",
+     "src/server/services/ShopService.luau"
+    ]
+   }
+  ],
+  "exclusive_sites": [
+   {
+    "op": "DataStore access",
+    "only_in": [
+     "src/server/services/DataService.luau"
+    ]
+   },
+   {
+    "op": "Instance.new(\"RemoteEvent\")",
+    "only_in": [
+     "src/shared/Remotes.luau"
+    ]
+   },
+   {
+    "op": "data.coins writes",
+    "only_in": [
+     "src/server/services/CurrencyService.luau",
+     "src/server/services/DataService.luau"
+    ]
+   },
+   {
+    "op": "leaderstats writes",
+    "only_in": [
+     "src/server/services/LeaderboardService.luau"
+    ]
+   },
+   {
+    "op": "print/warn",
+    "only_in": [
+     "src/shared/Log.luau"
+    ]
+   },
+   {
+    "op": "rbxassetid literal",
+    "only_in": []
+   }
+  ],
+  "config_modules": {
+   "src/shared/Config.luau": {
+    "keys": 35,
+    "used_by": 7
+   }
+  }
+ },
+ "used_by": {
+  "src/client/controllers/UIController.luau": [
+   "src/client/controllers/HUDController.luau",
+   "src/client/controllers/InputController.luau",
+   "src/client/controllers/InventoryController.luau",
+   "src/client/controllers/ShopController.luau"
+  ],
+  "src/server/services/CurrencyService.luau": [
+   "src/server/services/AdminService.luau",
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/EnemyService.luau",
+   "src/server/services/RoundService.luau",
+   "src/server/services/ShopService.luau"
+  ],
+  "src/server/services/DataService.luau": [
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/EnemyService.luau",
+   "src/server/services/LeaderboardService.luau",
+   "src/server/services/RoundService.luau",
+   "src/server/services/ShopService.luau"
+  ],
+  "src/server/services/LeaderboardService.luau": [
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/EnemyService.luau"
+  ],
+  "src/server/services/RoundService.luau": [
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/EnemyService.luau"
+  ],
+  "src/shared/Assets.luau": [
+   "src/client/controllers/HUDController.luau",
+   "src/client/controllers/InventoryController.luau",
+   "src/client/controllers/ShopController.luau",
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/EnemyService.luau"
+  ],
+  "src/shared/Config.luau": [
+   "src/server/services/AdminService.luau",
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/DataService.luau",
+   "src/server/services/EnemyService.luau",
+   "src/server/services/RoundService.luau",
+   "src/server/services/ShopService.luau"
+  ],
+  "src/shared/ItemCatalog.luau": [
+   "src/client/controllers/InventoryController.luau",
+   "src/client/controllers/ShopController.luau",
+   "src/server/services/DataService.luau",
+   "src/server/services/ShopService.luau"
+  ],
+  "src/shared/Log.luau": [
+   "src/client/Main.client.luau",
+   "src/server/Main.server.luau",
+   "src/server/services/AdminService.luau",
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/DataService.luau",
+   "src/server/services/EnemyService.luau",
+   "src/server/services/LeaderboardService.luau",
+   "src/server/services/RoundService.luau",
+   "src/server/services/ShopService.luau",
+   "src/shared/Assets.luau"
+  ],
+  "src/shared/Maid.luau": [
+   "src/server/services/EnemyService.luau"
+  ],
+  "src/shared/MathUtil.luau": [
+   "src/client/controllers/HUDController.luau",
+   "src/client/controllers/ShopController.luau",
+   "src/server/services/CoinPickupService.luau",
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/EnemyService.luau"
+  ],
+  "src/shared/Remotes.luau": [
+   "src/client/controllers/HUDController.luau",
+   "src/client/controllers/InventoryController.luau",
+   "src/client/controllers/ShopController.luau",
+   "src/server/Main.server.luau",
+   "src/server/services/CurrencyService.luau",
+   "src/server/services/DataService.luau",
+   "src/server/services/EnemyService.luau",
+   "src/server/services/RoundService.luau",
+   "src/server/services/ShopService.luau"
+  ],
+  "src/shared/Signal.luau": [
+   "src/server/services/DataService.luau",
+   "src/server/services/RoundService.luau"
+  ],
+  "src/shared/Types.luau": [
+   "src/server/services/DataService.luau"
+  ]
+ }
+}

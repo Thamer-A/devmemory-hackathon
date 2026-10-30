@@ -154,6 +154,19 @@ def main(argv=None):
     if a.dry:
         return
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
+    if any(CONDITIONS[c]["pack"] for c in conds):
+        from devmem.scan import scan
+        setup_log = RESULTS / "setup_costs.jsonl"
+        for pid in sorted({t["project"] for t in tasks}):
+            proj = BENCH / "projects" / pid
+            t0 = time.time()
+            mp = scan(proj / "game", proj / "devmemory")
+            rec = {"suite": a.suite, "project": pid, "scan_s": round(time.time() - t0, 3),
+                   "files": len(mp["files"]), "llm_tokens": mp["llm_tokens_used"],
+                   "sessions_captured": len(list((proj / "devmemory" / "sessions").glob("*.meta.json")))}
+            with open(setup_log, "a", encoding="utf-8") as sf:
+                sf.write(json.dumps(rec) + "\n")
+            print(f"setup {rec}", file=sys.stderr)
     out = RESULTS / f"{a.suite}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=a.jobs) as ex, open(out, "a", encoding="utf-8") as f:
