@@ -52,7 +52,7 @@ local function requestPurchase(itemId: number)
 	local token = requestCount
 	pending[itemId] = token
 	refreshButtons()
-	Remotes.get("BuyItem"):FireServer(itemId)
+	Remotes.get("PurchaseItem"):FireServer(itemId)
 
 	task.delay(BUY_TIMEOUT, function()
 		if pending[itemId] == token then

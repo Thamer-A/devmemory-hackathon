@@ -15,10 +15,7 @@ local DataService = require(script.Parent.DataService)
 local LeaderboardService = require(script.Parent.LeaderboardService)
 local RoundService = require(script.Parent.RoundService)
 
-local DAMAGE = { Grunt = 12, Brute = 25 }
-
 local EnemyService = {}
-EnemyService.DAMAGE = DAMAGE
 
 local ENEMY_TAG = "CoinRushEnemy"
 local KINDS = { "Grunt", "Brute" }
@@ -187,7 +184,7 @@ local function onEnemyTouched(record: EnemyRecord, other: BasePart)
 	end
 	record.lastHit[player] = now
 
-	local damage = DAMAGE[record.kind]
+	local damage = Config.Enemies[record.kind].damage
 	humanoid:TakeDamage(damage)
 	Remotes.get("EnemyHit"):FireClient(player, record.kind, damage)
 end

@@ -54,7 +54,7 @@ function Remotes.get(name: string): RemoteEvent
 	return remote
 end
 
-Remotes.define("BuyItem")
+Remotes.define("PurchaseItem")
 Remotes.define("CoinsChanged")
 Remotes.define("RoundState")
 Remotes.define("EquipItem")

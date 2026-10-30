@@ -40,7 +40,7 @@ local function applyEquipped(player: Player)
 	humanoid.WalkSpeed = speed
 end
 
-local function onBuyItem(player: Player, itemId: any)
+local function onPurchaseItem(player: Player, itemId: any)
 	if type(itemId) ~= "number" then
 		Log.warn("ShopService", "bad item id from", player.Name)
 		return
@@ -102,7 +102,7 @@ local function watchPlayer(player: Player)
 end
 
 function ShopService.init()
-	Remotes.get("BuyItem").OnServerEvent:Connect(onBuyItem)
+	Remotes.get("PurchaseItem").OnServerEvent:Connect(onPurchaseItem)
 	Remotes.get("EquipItem").OnServerEvent:Connect(onEquipItem)
 
 	Players.PlayerAdded:Connect(watchPlayer)

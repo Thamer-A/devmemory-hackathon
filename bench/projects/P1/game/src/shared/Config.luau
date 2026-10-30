@@ -37,8 +37,8 @@ local Config = {
 
 	-- Enemies
 	Enemies = {
-		Grunt = { health = 50, speed = 14 },
-		Brute = { health = 200, speed = 8 },
+		Grunt = { health = 50, speed = 14, damage = 12 },
+		Brute = { health = 200, speed = 8, damage = 25 },
 	},
 	EnemySpawnInterval = 6,
 	MaxEnemies = 8,
