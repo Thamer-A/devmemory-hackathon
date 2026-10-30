@@ -31,6 +31,15 @@ def _line_with(src: dict[str, str], must: list[str], pattern: str) -> bool:
     return False
 
 
+def _cyan_rgb(src: dict[str, str]) -> bool:
+    """Any Color3.fromRGB that is cyan-ish: low red, high green and blue."""
+    for t in src.values():
+        for r, g, b in re.findall(r"Color3\.fromRGB\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", t):
+            if int(r) < 130 and int(g) > 170 and int(b) > 200:
+                return True
+    return False
+
+
 def grade(work: Path) -> dict:
     src = _src(work)
     shared = {k: v for k, v in src.items() if k.startswith("src/shared")}
@@ -38,10 +47,10 @@ def grade(work: Path) -> dict:
     c = {
         # S1
         "config_module_in_shared": any(Path(k).stem.lower().startswith("config") for k in shared),
-        "remotes_in_single_module": len(remote_files) <= 1 and all("remote" in k.lower() for k in remote_files),
+        "remotes_in_single_module": len(remote_files) == 1 and "remote" in remote_files[0].lower(),
         "start_blades_2": _any(src, r"\b\w*blade\w*count\w*\s*=\s*2\b|\b(start|base|initial)\w*blades?\w*\s*=\s*2\b"),
         "orbit_radius_7": _any(src, r"\b\w*(radius|orbit|reach)\w*\s*=\s*7(\.0)?\b"),
-        "neon_cyan_blades": _any(src, r"Enum\.Material\.Neon") and _any(src, r"cyan|Color3\.fromRGB\(\s*0\s*,\s*2[0-5]\d\s*,\s*2[0-5]\d|Color3\.new\(\s*0\s*,\s*[0-9.]+\s*,\s*1"),
+        "neon_cyan_blades": _any(src, r"Enum\.Material\.Neon") and (_any(src, r"cyan") or _cyan_rgb(src)),
         # S2
         "blade_damage_20": _any(src, r"\b\w*damage\w*\s*=\s*20\b"),
         "zombie_health_60": _any(src, r"\b\w*health\w*\s*=\s*60\b"),
