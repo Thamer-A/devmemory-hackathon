@@ -62,7 +62,9 @@ def compute_checks(spec: dict, server: dict, client: dict, gameover: dict | None
         # approach observed, or zombies reached a player who never moved (measurement may start late)
         "zombies_chase": dm is not None and ((df is not None and dm < df - 4) or dm < 6),
         "kills_and_coins": grew("coin") and grew("kill"),
-        "waves_advance": bool(client.get("wave2_seen")) or (server.get("npc_spawned") or 0) > 8,
+        # wave 2 seen, more zombies than wave 1, or the between-waves shop appeared (wave 1 ended)
+        "waves_advance": bool(client.get("wave2_seen")) or (server.get("npc_spawned") or 0) > 8
+                         or (client.get("shop_names_seen") or 0) >= 2,
         "player_damaged": server.get("health_min") is not None and server["health_min"] < (server.get("health_max") or 0),
         "shop_offers": (client.get("shop_names_seen") or 0) >= 2,
         "hud_visible": bool(client.get("wave_word") and client.get("timer_seen") and client.get("health_seen")),
