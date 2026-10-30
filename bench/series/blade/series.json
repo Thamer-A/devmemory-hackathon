@@ -1,0 +1,17 @@
+{
+ "about": "Multi-session build of a small Roblox game from an empty Rojo scaffold. Each step is a FRESH headless Claude Code session (no conversation carry-over). Decisions are introduced across steps and later steps refer back to them, as a developer would over several chats. Conditions differ only in what carries knowledge between sessions.",
+ "model": "sonnet",
+ "max_turns": 60,
+ "timeout_s": 1500,
+ "agents_md": "# Blade Swarm\n\nRoblox game built with Rojo (`default.project.json`). Code lives in `src/shared`, `src/server`, `src/client`.\n\nKeep this file up to date: after every change, record the design decisions (numbers, names, colors, rules) and where things live, so the next session can continue without re-reading everything.\n",
+ "steps": [
+  {"id": "S1", "prompt": "I'm making a Roblox game with Rojo in this folder. Concept: \"Blade Swarm\" - each player has blades orbiting around them, zombies swarm in waves, blades kill zombies, kills give coins, and between waves you buy random upgrades. Today just the first piece: make each player's blades orbit around them and look cool. Decisions: start with 2 blades, orbit radius 7 studs, neon cyan blades. Keep all tunable numbers in one Config module in src/shared, and put every RemoteEvent in a single Remotes module."},
+  {"id": "S2", "prompt": "Next: add zombies. They should spawn around the edge of the arena, chase the nearest player, and die when the blades hit them. Each blade hit does 20 damage and zombies have 60 health. Give 5 coins per kill and show coins and kills on the leaderboard."},
+  {"id": "S3", "prompt": "Add the wave system. Wave 1 has 8 zombies and each wave adds 4 more. There's a 20 second break between waves. Zombie health goes up 15% per wave. Zombies should also hurt the player on contact, 10 damage per second."},
+  {"id": "S4", "prompt": "Now the upgrade shop for the break between waves. Each player gets 3 random offers. Upgrades: +1 Blade (Rare, 60 coins), Sharper Blades +25% damage (Common, 30), Faster Spin +20% spin speed (Common, 30), Longer Reach +2 studs (Common, 35), Vitality +25 max HP (Common, 25), Vampiric heals 2 HP per kill (Rare, 55), Greed +25% coins (Rare, 50). Rerolling the offers costs 10 coins. All purchase logic must be server-side."},
+  {"id": "S5", "prompt": "The UI is ugly. Make a proper HUD and shop UI: dark navy rounded panels, cyan accent, gold for coins, and rarity colors Common = gray, Rare = blue, Epic = purple. Show the wave number, a countdown timer, zombies left, coins, and a health bar."},
+  {"id": "S6", "prompt": "Add an Epic upgrade called Twin Spin: +2 blades for 120 coins. Make sure it shows up with the rarity colors we picked."},
+  {"id": "S7", "prompt": "Playtest feedback: the waves ramp up too hard and coins feel too slow. Lower the zombie health growth to 10% per wave and double the coins per kill from what we set. Also add a game over: if every player is dead, reset the run back to wave 1."},
+  {"id": "S8", "prompt": "Final polish: floating damage numbers when blades hit a zombie, a burst effect when a zombie dies, and a \"+coins\" popup for the player who got the kill. Don't break anything we built."}
+ ]
+}
