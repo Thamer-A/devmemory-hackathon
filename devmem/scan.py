@@ -60,8 +60,12 @@ EXCLUSIVE = {
         "float() on money": re.compile(r"\bfloat\s*\("),
         "raise Exception/ValueError": re.compile(r"raise\s+(Exception|ValueError|RuntimeError)\b"),
         "open( file I/O": re.compile(r"(?<![.\w])open\s*\("),
+        "SQL statements": re.compile(r"\b(SELECT\s|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)"),
     },
 }
+ANY_FILE_OPS = {"rbxassetid literal"}
+# reported when absent: "occurs nowhere in source; avoid introducing it"
+NEVER_SEEN_OPS = {"print/warn", "print(", "rbxassetid literal", "float() on money", "raise Exception/ValueError"}
 CONFIG_NAMES = {"config", "settings", "constants", "tunables"}
 
 
@@ -108,6 +112,8 @@ def _extract(rel: str, text: str) -> dict:
         deps = []
         for frm, names, imp in PY["import"].findall(code):
             deps.append(frm or imp)
+            if frm:  # `from pkg import config` depends on pkg.config
+                deps += [f"{frm}.{n.strip()}" for n in names.split(",") if n.strip()]
         info["deps"] = sorted(set(d for d in deps if d))
     elif lang in ("ts", "js"):
         info["symbols"] = sorted(set(JS["func"].findall(code)) | set(JS["class"].findall(code)))
@@ -200,17 +206,39 @@ def _conventions(files: dict, codes: dict) -> dict:
             key = f"{mod_fn[0]}.{mod_fn[1]}"
             if key in defined and defined[key] != rel:
                 calls[key].add(rel)
+    # python-style hubs: `from pkg.mod import name` where name is defined in mod
+    py_syms = {(i["module"], s) for i in files.values() if i["lang"] == "python" for s in i.get("symbols", [])}
+    for rel, info in files.items():
+        if info["lang"] != "python":
+            continue
+        for d in info.get("deps", []):
+            parts = d.split(".")
+            if len(parts) >= 2 and (parts[-2], parts[-1]) in py_syms:
+                calls[f"{parts[-2]}.{parts[-1]}"].add(rel)
     hubs = sorted(((k, sorted(v)) for k, v in calls.items() if len(v) >= 3), key=lambda kv: -len(kv[1]))
     # exclusive sites per language
     exclusive = []
     langs = {i["lang"] for i in files.values()}
+    def is_test(rel: str) -> bool:  # tests may legitimately break production conventions
+        name = Path(rel).name
+        return rel.startswith(("tests/", "test/", "spec/")) or "/tests/" in rel or name.startswith("test_")
+
     for lang in langs:
         for label, rx in EXCLUSIVE.get(lang, {}).items():
-            hits = sorted(rel for rel, code in codes.items() if files[rel]["lang"] == lang and rx.search(code))
-            n_lang = sum(1 for i in files.values() if i["lang"] == lang)
-            if 1 <= len(hits) <= 2 and n_lang >= 6:
+            # literals like asset ids also live in data files (json/toml), so scan those too (not docs)
+            any_file = label in ANY_FILE_OPS
+            hits = sorted(rel for rel, code in codes.items()
+                          if (files[rel]["lang"] == lang or (any_file and not rel.endswith(".md")))
+                          and not is_test(rel) and rx.search(code))
+            n_lang = sum(1 for r, i in files.items() if i["lang"] == lang and not is_test(r))
+            if n_lang < 6:
+                continue
+            dirs = {str(Path(h).parent) for h in hits}
+            if 1 <= len(hits) <= 2:
                 exclusive.append({"op": label, "only_in": hits})
-            elif not hits and n_lang >= 6 and label in ("print/warn", "print(", "rbxassetid literal"):
+            elif 3 <= len(hits) <= 6 and len(dirs) == 1 and dirs != {"."}:
+                exclusive.append({"op": label, "only_in": [dirs.pop().replace("\\", "/") + "/"]})
+            elif not hits and label in NEVER_SEEN_OPS:
                 exclusive.append({"op": label, "only_in": []})
     config_mods = [rel for rel, i in files.items() if i.get("config_keys")]
     cfg_users = {rel: sorted(r for r, i in files.items() if i.get("config_keys_used") or

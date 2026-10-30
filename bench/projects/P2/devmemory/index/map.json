@@ -1,0 +1,688 @@
+{
+ "project": "game",
+ "scanned_at": "2026-10-30T18:45:57+00:00",
+ "llm_tokens_used": 0,
+ "files": {
+  "README.md": {
+   "lang": "text",
+   "module": "README",
+   "symbols": [],
+   "deps": [],
+   "hash": "96460b0f7ff2d778",
+   "lines": 27,
+   "bytes": 705
+  },
+  "pyproject.toml": {
+   "lang": "text",
+   "module": "pyproject",
+   "symbols": [],
+   "deps": [],
+   "hash": "ba87c535889ca6d9",
+   "lines": 20,
+   "bytes": 438
+  },
+  "ledgerly/__init__.py": {
+   "lang": "python",
+   "module": "ledgerly",
+   "symbols": [],
+   "deps": [],
+   "methods": [],
+   "hash": "7d0ed770163453a1",
+   "lines": 4,
+   "bytes": 104
+  },
+  "ledgerly/__main__.py": {
+   "lang": "python",
+   "module": "__main__",
+   "symbols": [],
+   "deps": [
+    "ledgerly",
+    "ledgerly.cli",
+    "sys"
+   ],
+   "methods": [],
+   "hash": "9ee41c0a6835e138",
+   "lines": 7,
+   "bytes": 90
+  },
+  "ledgerly/cli.py": {
+   "lang": "python",
+   "module": "cli",
+   "symbols": [
+    "_cmd_add",
+    "_cmd_budget",
+    "_cmd_categories",
+    "_cmd_list",
+    "_cmd_report",
+    "build_parser",
+    "main"
+   ],
+   "deps": [
+    "argparse",
+    "datetime",
+    "datetime.date",
+    "ledgerly",
+    "ledgerly.config",
+    "ledgerly.db",
+    "ledgerly.errors",
+    "ledgerly.errors.AppError",
+    "ledgerly.money",
+    "ledgerly.services",
+    "ledgerly.services.budget_service",
+    "ledgerly.services.category_service",
+    "ledgerly.services.expense_service",
+    "ledgerly.services.report_service",
+    "ledgerly.ui",
+    "sqlite3",
+    "typing",
+    "typing.Sequence"
+   ],
+   "methods": [],
+   "hash": "d520519bb8a93c98",
+   "lines": 131,
+   "bytes": 4624
+  },
+  "ledgerly/config.py": {
+   "lang": "python",
+   "module": "config",
+   "symbols": [
+    "get_db_path",
+    "get_log_level"
+   ],
+   "deps": [
+    "os"
+   ],
+   "methods": [],
+   "config_keys": [
+    "DEFAULT_DB_PATH",
+    "DEFAULT_CURRENCY",
+    "MAX_DESCRIPTION_LEN",
+    "DATE_FORMAT",
+    "MONTH_FORMAT",
+    "DEFAULT_CATEGORIES",
+    "FALLBACK_CATEGORY"
+   ],
+   "hash": "197838064e9b202b",
+   "lines": 28,
+   "bytes": 551
+  },
+  "ledgerly/db.py": {
+   "lang": "python",
+   "module": "db",
+   "symbols": [
+    "get_connection",
+    "init_schema"
+   ],
+   "deps": [
+    "ledgerly",
+    "ledgerly.config",
+    "sqlite3"
+   ],
+   "methods": [],
+   "hash": "cd21045a18018a03",
+   "lines": 42,
+   "bytes": 1079
+  },
+  "ledgerly/errors.py": {
+   "lang": "python",
+   "module": "errors",
+   "symbols": [
+    "AppError",
+    "ConflictError",
+    "NotFoundError",
+    "ValidationError"
+   ],
+   "deps": [],
+   "methods": [
+    "__init__"
+   ],
+   "hash": "194696f969e1c5f7",
+   "lines": 23,
+   "bytes": 461
+  },
+  "ledgerly/logging_setup.py": {
+   "lang": "python",
+   "module": "logging_setup",
+   "symbols": [
+    "get_logger"
+   ],
+   "deps": [
+    "ledgerly",
+    "ledgerly.config",
+    "logging"
+   ],
+   "methods": [],
+   "hash": "48f4abf0c8ef6afb",
+   "lines": 21,
+   "bytes": 556
+  },
+  "ledgerly/money.py": {
+   "lang": "python",
+   "module": "money",
+   "symbols": [
+    "format_cents",
+    "parse_amount"
+   ],
+   "deps": [
+    "decimal",
+    "decimal.Decimal",
+    "decimal.InvalidOperation",
+    "ledgerly",
+    "ledgerly.config",
+    "ledgerly.errors",
+    "ledgerly.errors.ValidationError"
+   ],
+   "methods": [],
+   "hash": "688c532c809ba978",
+   "lines": 31,
+   "bytes": 1065
+  },
+  "ledgerly/ui.py": {
+   "lang": "python",
+   "module": "ui",
+   "symbols": [
+    "emit",
+    "emit_table"
+   ],
+   "deps": [
+    "typing",
+    "typing.Sequence"
+   ],
+   "methods": [
+    "line"
+   ],
+   "hash": "cdeba0dca1158ead",
+   "lines": 24,
+   "bytes": 679
+  },
+  "ledgerly/repositories/__init__.py": {
+   "lang": "python",
+   "module": "repositories",
+   "symbols": [],
+   "deps": [],
+   "methods": [],
+   "hash": "9870c0f0fafe750d",
+   "lines": 2,
+   "bytes": 72
+  },
+  "ledgerly/repositories/budgets.py": {
+   "lang": "python",
+   "module": "budgets",
+   "symbols": [
+    "get_limit",
+    "list_limits",
+    "set_limit"
+   ],
+   "deps": [
+    "sqlite3"
+   ],
+   "methods": [],
+   "hash": "8452c47eb89b3c2e",
+   "lines": 25,
+   "bytes": 853
+  },
+  "ledgerly/repositories/categories.py": {
+   "lang": "python",
+   "module": "categories",
+   "symbols": [
+    "add",
+    "ensure",
+    "get_by_name",
+    "list_all"
+   ],
+   "deps": [
+    "ledgerly.errors",
+    "ledgerly.errors.ConflictError",
+    "sqlite3",
+    "typing",
+    "typing.Iterable"
+   ],
+   "methods": [],
+   "hash": "eb3e12787ec7a313",
+   "lines": 30,
+   "bytes": 912
+  },
+  "ledgerly/repositories/expenses.py": {
+   "lang": "python",
+   "module": "expenses",
+   "symbols": [
+    "add",
+    "delete",
+    "get",
+    "list_expenses",
+    "sum_for_category",
+    "totals_by_category"
+   ],
+   "deps": [
+    "sqlite3"
+   ],
+   "methods": [],
+   "hash": "e06f57138d868ec8",
+   "lines": 61,
+   "bytes": 1962
+  },
+  "ledgerly/services/__init__.py": {
+   "lang": "python",
+   "module": "services",
+   "symbols": [],
+   "deps": [],
+   "methods": [],
+   "hash": "3fc6474736675225",
+   "lines": 2,
+   "bytes": 75
+  },
+  "ledgerly/services/budget_service.py": {
+   "lang": "python",
+   "module": "budget_service",
+   "symbols": [
+    "BudgetStatus",
+    "all_statuses",
+    "set_budget",
+    "status_for_month"
+   ],
+   "deps": [
+    "dataclasses",
+    "dataclasses.dataclass",
+    "ledgerly",
+    "ledgerly.errors",
+    "ledgerly.errors.NotFoundError",
+    "ledgerly.logging_setup",
+    "ledgerly.logging_setup.get_logger",
+    "ledgerly.money",
+    "ledgerly.repositories",
+    "ledgerly.repositories.budgets as budget_repo",
+    "ledgerly.repositories.expenses as expense_repo",
+    "ledgerly.services",
+    "ledgerly.services.category_service",
+    "ledgerly.services.expense_service",
+    "ledgerly.services.expense_service.validate_month",
+    "sqlite3"
+   ],
+   "methods": [
+    "percent_used",
+    "remaining"
+   ],
+   "hash": "065a38fa7457f976",
+   "lines": 54,
+   "bytes": 1917
+  },
+  "ledgerly/services/category_service.py": {
+   "lang": "python",
+   "module": "category_service",
+   "symbols": [
+    "ensure_defaults",
+    "list_categories",
+    "require_category"
+   ],
+   "deps": [
+    "ledgerly",
+    "ledgerly.config",
+    "ledgerly.errors",
+    "ledgerly.errors.NotFoundError",
+    "ledgerly.errors.ValidationError",
+    "ledgerly.repositories",
+    "ledgerly.repositories.categories as category_repo",
+    "sqlite3"
+   ],
+   "methods": [],
+   "hash": "e1ed3f54f4a89f7c",
+   "lines": 25,
+   "bytes": 756
+  },
+  "ledgerly/services/expense_service.py": {
+   "lang": "python",
+   "module": "expense_service",
+   "symbols": [
+    "ExpenseRecord",
+    "_to_record",
+    "add_expense",
+    "delete_expense",
+    "get_expense",
+    "list_expenses",
+    "validate_month",
+    "validate_spent_on"
+   ],
+   "deps": [
+    "dataclasses",
+    "dataclasses.dataclass",
+    "datetime",
+    "datetime.date",
+    "datetime.datetime",
+    "ledgerly",
+    "ledgerly.config",
+    "ledgerly.errors",
+    "ledgerly.errors.NotFoundError",
+    "ledgerly.errors.ValidationError",
+    "ledgerly.logging_setup",
+    "ledgerly.logging_setup.get_logger",
+    "ledgerly.money",
+    "ledgerly.repositories",
+    "ledgerly.repositories.expenses as expense_repo",
+    "ledgerly.services",
+    "ledgerly.services.category_service",
+    "sqlite3"
+   ],
+   "methods": [],
+   "hash": "9c69065e90326bdd",
+   "lines": 95,
+   "bytes": 3188
+  },
+  "ledgerly/services/report_service.py": {
+   "lang": "python",
+   "module": "report_service",
+   "symbols": [
+    "CategoryTotal",
+    "MonthlyReport",
+    "monthly_report"
+   ],
+   "deps": [
+    "dataclasses",
+    "dataclasses.dataclass",
+    "ledgerly.repositories",
+    "ledgerly.repositories.expenses as expense_repo",
+    "ledgerly.services.expense_service",
+    "ledgerly.services.expense_service.validate_month",
+    "sqlite3"
+   ],
+   "methods": [
+    "total_cents"
+   ],
+   "hash": "54ad592a8d7419ea",
+   "lines": 29,
+   "bytes": 754
+  },
+  "tests/conftest.py": {
+   "lang": "python",
+   "module": "conftest",
+   "symbols": [
+    "conn",
+    "db_path"
+   ],
+   "deps": [
+    "ledgerly",
+    "ledgerly.db",
+    "ledgerly.services",
+    "ledgerly.services.category_service",
+    "pytest"
+   ],
+   "methods": [],
+   "hash": "3602746610b1d558",
+   "lines": 21,
+   "bytes": 435
+  },
+  "tests/test_budget.py": {
+   "lang": "python",
+   "module": "test_budget",
+   "symbols": [
+    "test_all_statuses",
+    "test_month_status_counts_only_that_month",
+    "test_month_status_without_budget",
+    "test_percent_used_can_exceed_100",
+    "test_percent_used_floors_small_fractions",
+    "test_percent_used_rounds_down",
+    "test_percent_used_zero_when_nothing_spent",
+    "test_remaining_is_limit_minus_spent",
+    "test_remaining_is_negative_when_overspent",
+    "test_set_budget_overwrites",
+    "test_set_budget_returns_cents",
+    "test_set_budget_validates"
+   ],
+   "deps": [
+    "ledgerly.errors",
+    "ledgerly.errors.NotFoundError",
+    "ledgerly.errors.ValidationError",
+    "ledgerly.services",
+    "ledgerly.services.budget_service",
+    "ledgerly.services.expense_service",
+    "pytest"
+   ],
+   "methods": [],
+   "hash": "7e23d0ed34aedc4f",
+   "lines": 89,
+   "bytes": 3362
+  },
+  "tests/test_cli.py": {
+   "lang": "python",
+   "module": "test_cli",
+   "symbols": [
+    "run",
+    "test_add_and_list",
+    "test_add_rejects_non_iso_date",
+    "test_budget_set_and_show",
+    "test_budget_show_remaining_negative_when_overspent",
+    "test_categories",
+    "test_categories_sort_by_name",
+    "test_list_empty",
+    "test_not_found_exit_code",
+    "test_report",
+    "test_validation_error_exit_code"
+   ],
+   "deps": [
+    "ledgerly",
+    "ledgerly.cli"
+   ],
+   "methods": [],
+   "hash": "a8af1ce9435b873c",
+   "lines": 91,
+   "bytes": 2894
+  },
+  "tests/test_expenses.py": {
+   "lang": "python",
+   "module": "test_expenses",
+   "symbols": [
+    "test_add_accepts_iso_date_with_surrounding_space",
+    "test_add_and_get",
+    "test_add_defaults_to_today",
+    "test_add_rejects_bad_input",
+    "test_add_rejects_non_iso_dates",
+    "test_add_unknown_category",
+    "test_delete",
+    "test_errors_share_a_base_class",
+    "test_list_filters_by_month",
+    "test_list_rejects_bad_month",
+    "test_monthly_report_groups_by_category"
+   ],
+   "deps": [
+    "datetime",
+    "datetime.date",
+    "ledgerly",
+    "ledgerly.config",
+    "ledgerly.errors",
+    "ledgerly.errors.AppError",
+    "ledgerly.errors.NotFoundError",
+    "ledgerly.errors.ValidationError",
+    "ledgerly.services",
+    "ledgerly.services.expense_service",
+    "ledgerly.services.report_service",
+    "pytest"
+   ],
+   "methods": [],
+   "hash": "77a8ee6c2f091c69",
+   "lines": 100,
+   "bytes": 3458
+  },
+  "tests/test_money.py": {
+   "lang": "python",
+   "module": "test_money",
+   "symbols": [
+    "test_format_cents",
+    "test_format_cents_negative_and_currency",
+    "test_parse_amount_invalid",
+    "test_parse_amount_returns_int",
+    "test_parse_amount_valid"
+   ],
+   "deps": [
+    "ledgerly.errors",
+    "ledgerly.errors.ValidationError",
+    "ledgerly.money",
+    "ledgerly.money.format_cents",
+    "ledgerly.money.parse_amount",
+    "pytest"
+   ],
+   "methods": [],
+   "hash": "de17ac18da7c96d3",
+   "lines": 42,
+   "bytes": 983
+  }
+ },
+ "engine": "python",
+ "rojo": {},
+ "conventions": {
+  "hub_apis": [
+   {
+    "api": "errors.ValidationError",
+    "callers": 6,
+    "files": [
+     "ledgerly/money.py",
+     "ledgerly/services/category_service.py",
+     "ledgerly/services/expense_service.py",
+     "tests/test_budget.py",
+     "tests/test_expenses.py",
+     "tests/test_money.py"
+    ]
+   },
+   {
+    "api": "errors.NotFoundError",
+    "callers": 5,
+    "files": [
+     "ledgerly/services/budget_service.py",
+     "ledgerly/services/category_service.py",
+     "ledgerly/services/expense_service.py",
+     "tests/test_budget.py",
+     "tests/test_expenses.py"
+    ]
+   }
+  ],
+  "exclusive_sites": [
+   {
+    "op": "SQL statements",
+    "only_in": [
+     "ledgerly/repositories/"
+    ]
+   },
+   {
+    "op": "float() on money",
+    "only_in": []
+   },
+   {
+    "op": "os.environ / settings reads",
+    "only_in": [
+     "ledgerly/config.py"
+    ]
+   },
+   {
+    "op": "print(",
+    "only_in": [
+     "ledgerly/ui.py"
+    ]
+   },
+   {
+    "op": "raise Exception/ValueError",
+    "only_in": []
+   },
+   {
+    "op": "sqlite3.connect / DB connection",
+    "only_in": [
+     "ledgerly/db.py"
+    ]
+   }
+  ],
+  "config_modules": {
+   "ledgerly/config.py": {
+    "keys": 7,
+    "used_by": 7
+   }
+  }
+ },
+ "used_by": {
+  "ledgerly/__init__.py": [
+   "ledgerly/__main__.py",
+   "ledgerly/cli.py",
+   "ledgerly/db.py",
+   "ledgerly/logging_setup.py",
+   "ledgerly/money.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/category_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/conftest.py",
+   "tests/test_cli.py",
+   "tests/test_expenses.py"
+  ],
+  "ledgerly/cli.py": [
+   "ledgerly/__main__.py",
+   "tests/test_cli.py"
+  ],
+  "ledgerly/config.py": [
+   "ledgerly/cli.py",
+   "ledgerly/db.py",
+   "ledgerly/logging_setup.py",
+   "ledgerly/money.py",
+   "ledgerly/services/category_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/test_expenses.py"
+  ],
+  "ledgerly/db.py": [
+   "ledgerly/cli.py",
+   "tests/conftest.py"
+  ],
+  "ledgerly/errors.py": [
+   "ledgerly/cli.py",
+   "ledgerly/money.py",
+   "ledgerly/repositories/categories.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/category_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/test_budget.py",
+   "tests/test_expenses.py",
+   "tests/test_money.py"
+  ],
+  "ledgerly/logging_setup.py": [
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/expense_service.py"
+  ],
+  "ledgerly/money.py": [
+   "ledgerly/cli.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/test_money.py"
+  ],
+  "ledgerly/repositories/__init__.py": [
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/category_service.py",
+   "ledgerly/services/expense_service.py",
+   "ledgerly/services/report_service.py"
+  ],
+  "ledgerly/services/__init__.py": [
+   "ledgerly/cli.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/conftest.py",
+   "tests/test_budget.py",
+   "tests/test_expenses.py"
+  ],
+  "ledgerly/services/budget_service.py": [
+   "ledgerly/cli.py",
+   "tests/test_budget.py"
+  ],
+  "ledgerly/services/category_service.py": [
+   "ledgerly/cli.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/expense_service.py",
+   "tests/conftest.py"
+  ],
+  "ledgerly/services/expense_service.py": [
+   "ledgerly/cli.py",
+   "ledgerly/services/budget_service.py",
+   "ledgerly/services/report_service.py",
+   "tests/test_budget.py",
+   "tests/test_expenses.py"
+  ],
+  "ledgerly/services/report_service.py": [
+   "ledgerly/cli.py",
+   "tests/test_expenses.py"
+  ],
+  "ledgerly/ui.py": [
+   "ledgerly/cli.py"
+  ]
+ }
+}

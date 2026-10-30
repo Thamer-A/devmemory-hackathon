@@ -1,6 +1,6 @@
 # game — project map
 
-Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:32:47+00:00.
+Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens) at 2026-10-30T18:45:57+00:00.
 
 ## Rojo mapping
 - `src/shared` -> ReplicatedStorage.Shared
@@ -14,14 +14,14 @@ Engine: roblox (rojo). Files indexed: 27. Built deterministically (0 LLM tokens)
 - `data.coins writes` occurs only in src/server/services/CurrencyService.luau, src/server/services/DataService.luau (observed); go through that module instead of repeating it.
 - `leaderstats writes` occurs only in src/server/services/LeaderboardService.luau (observed); go through that module instead of repeating it.
 - `print/warn` occurs only in src/shared/Log.luau (observed); go through that module instead of repeating it.
-- `rbxassetid literal` occurs nowhere in source (observed); avoid introducing it.
+- `rbxassetid literal` occurs only in assets/manifest.json (observed); go through that module instead of repeating it.
 - `Log.warn(...)` is the shared entry point, called from 10 files.
 - `Remotes.get(...)` is the shared entry point, called from 8 files.
 - `Log.info(...)` is the shared entry point, called from 7 files.
 - `CurrencyService.add(...)` is the shared entry point, called from 5 files.
 - `Assets.get(...)` is the shared entry point, called from 4 files.
-- `UIController.createPanel(...)` is the shared entry point, called from 3 files.
 - `UIController.createLabel(...)` is the shared entry point, called from 3 files.
+- `UIController.createPanel(...)` is the shared entry point, called from 3 files.
 - `ItemCatalog.getById(...)` is the shared entry point, called from 3 files.
 - Tunables live in `src/shared/Config.luau` (35 keys, used by 7 files); add new constants there.
 

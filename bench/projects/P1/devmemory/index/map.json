@@ -1,6 +1,6 @@
 {
  "project": "game",
- "scanned_at": "2026-10-30T18:32:47+00:00",
+ "scanned_at": "2026-10-30T18:45:57+00:00",
  "llm_tokens_used": 0,
  "files": {
   "README.md": {
@@ -855,7 +855,7 @@
     ]
    },
    {
-    "api": "UIController.createPanel",
+    "api": "UIController.createLabel",
     "callers": 3,
     "files": [
      "src/client/controllers/HUDController.luau",
@@ -864,7 +864,7 @@
     ]
    },
    {
-    "api": "UIController.createLabel",
+    "api": "UIController.createPanel",
     "callers": 3,
     "files": [
      "src/client/controllers/HUDController.luau",
@@ -925,7 +925,9 @@
    },
    {
     "op": "rbxassetid literal",
-    "only_in": []
+    "only_in": [
+     "assets/manifest.json"
+    ]
    }
   ],
   "config_modules": {

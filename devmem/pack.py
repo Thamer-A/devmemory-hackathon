@@ -158,6 +158,17 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
     # relevance gate: relative to the best file AND at least two distinct query terms (or one rare one)
     picked_files = [(s, hits, rel) for (s, hits), rel in fscores
                     if s > 0 and s >= 0.55 * top and (len(hits) >= 2 or s >= 0.8 * top)][:max_files]
+    # 1-hop graph expansion: a module the top files require whose NAME matches the task
+    # (e.g. "item" -> ItemCatalog) is usually where the change belongs, even if its body scores low.
+    by_module = {i["module"]: rel for rel, i in m["files"].items()}
+    have = {rel for _, _, rel in picked_files}
+    for _, _, rel in list(picked_files[:3]):
+        for dep in m["files"][rel].get("deps", []):
+            target = by_module.get(dep.split(".")[-1])
+            name_hits = sorted(set(tokenize(dep.split(".")[-1])) & qset)
+            if target and target not in have and name_hits:
+                picked_files.append((0.0, name_hits + [f"required by {Path(rel).name}"], target))
+                have.add(target)
 
     sessions = load_sessions(store) if mode in ("full", "nofresh") else []
     picked_sessions, decisions = [], []
