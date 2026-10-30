@@ -1,0 +1,8 @@
+{
+ "id": "D1",
+ "project": "P1",
+ "type": "unrelated",
+ "split": "dev",
+ "prompt": "Add a MathUtil.lerp(a, b, t) function that clamps t to the range [0, 1].",
+ "max_turns": 30
+}

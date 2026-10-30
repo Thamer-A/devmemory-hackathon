@@ -1,0 +1,8 @@
+{
+ "id": "C2",
+ "project": "P1",
+ "type": "stale",
+ "split": "dev",
+ "prompt": "Add a confirmation dialog before the client sends a shop purchase to the server.",
+ "max_turns": 30
+}

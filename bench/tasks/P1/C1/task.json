@@ -1,0 +1,8 @@
+{
+ "id": "C1",
+ "project": "P1",
+ "type": "stale",
+ "split": "dev",
+ "prompt": "Make the Brute enemy deal 35 damage.",
+ "max_turns": 30
+}

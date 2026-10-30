@@ -1,0 +1,8 @@
+{
+ "id": "D2",
+ "project": "P1",
+ "type": "unrelated",
+ "split": "dev",
+ "prompt": "Document how to use `rojo serve` for live sync in the README.",
+ "max_turns": 30
+}

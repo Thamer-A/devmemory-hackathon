@@ -1,0 +1,8 @@
+{
+ "id": "B2",
+ "project": "P1",
+ "type": "history",
+ "split": "dev",
+ "prompt": "Add an admin command to gift an item to a player.",
+ "max_turns": 30
+}

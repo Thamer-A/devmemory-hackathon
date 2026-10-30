@@ -1,0 +1,8 @@
+{
+ "id": "A2",
+ "project": "P1",
+ "type": "code",
+ "split": "dev",
+ "prompt": "Add a Coin Magnet item to the shop for 150 coins.",
+ "max_turns": 30
+}

@@ -1,0 +1,8 @@
+{
+ "id": "B1",
+ "project": "P1",
+ "type": "history",
+ "split": "dev",
+ "prompt": "Implement the daily reward we planned last session.",
+ "max_turns": 30
+}
