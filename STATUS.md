@@ -1,40 +1,42 @@
-# STATUS (updated 2026-10-30, Fri afternoon ET)
+# STATUS (updated Fri 30 Oct, evening ET)
 
-## Done
-- Telemetry check (`bench/TELEMETRY.md`) and proposal (`bench/PROPOSAL.md`). User approved; branch renamed to `main`.
-- `devmem/`, all deterministic with 0 LLM tokens:
-  - `claude_cli.py`: headless runner and stream-json parser
-  - `capture.py`: session records plus digest with file hashes
-  - `scan.py`: map, symbols, deps, remotes, config keys, observed conventions
-  - `pack.py`: BM25 retrieval, line-level freshness, decision sentences, token budget
-  - `cli.py`: `devmem scan|run|import|pack|status|hook`
-- P1 CoinRush fixture: 27 Luau files, 5 captured session-0 runs, then an uncaptured v2 refactor. See `bench/projects/P1/PLANTED.md`.
-- 8 P1 dev tasks with graders. Negative controls pass (`python -m bench.validate_graders`).
-- `bench/run.py` runner, `bench/report.py` tables.
-- Pilot `pilot0` (8 runs, C0/C1). Quota: 7-day meter unchanged at 18%.
+## Results so far
+- **Fixed benchmark (P1 dev, P1+P2 held-out):** `results/devfinal_report.md`, `results/heldout_report.md`. Held-out headline: C3 86% pass at $0.0087/success vs C1 72% $0.0104, C0 67% $0.0099, Sonnet ~$0.09–0.10. C3 is the only condition at the 80% floor.
+- **8-prompt scripted series (Sonnet):** `results/series_blade_report.md` and `results/series/blade/PLAYTEST.md`.
+  - DevMemory: $1.04 and 605k input tokens. AGENTS.md: $1.39 and 1.20M. None: $1.25 and 1.06M.
+  - All three honour 24/24 decisions statically, but the AGENTS.md build crashes in Studio.
 
-## Dev results (results/devfinal_report.md)
-- P1 dev, Haiku: C3 96% pass, $0.0053/success vs C1 88% $0.0077 (-31%), C0 83% $0.0082 (-35%); input tokens -24% vs C1.
-- B1 (history-only) passes only with C3 (3/3; all others 0).
-- C2 (static map only) is not better than C1; the gain comes from session memory.
-- C3nofresh 6/6 on stale tasks: freshness flags did not change success here (agents read current code anyway).
-- C4: Sonnet C0/C1 75-81% at $0.061-0.063/success (about 11x Haiku+C3).
+## In progress: adaptive race (`bench/adaptive_run.py`, `bench/adaptive/blade/race.json`)
+- **Loop:** one fresh Sonnet session per prompt → Studio playtest with the probes → next prompt chosen by a fixed rule: a bug report from the failed checks if anything failed, otherwise the next roadmap item (R1–R10). Cap of 16 prompts.
+- **Work dirs:** `%TEMP%/devmem-runs/adaptive_blade_<cond>_r1/` (project, devmemory store, `state.json`). Log: `results/adaptive_blade.jsonl`.
+- **Rojo serve ports:** none 34873, agentsmd 34874, devmemory 34875. These are detached `rojo.exe` processes; kill them at the end.
+- **Studio windows:** race_none, race_agentsmd, race_devmemory, built with the probes baked in from `demo/build/race_<c>.project.json`.
+- **Commands:**
+  - `python -m bench.adaptive_parallel --race blade --conditions ...` runs the next session.
+  - `python -m bench.adaptive_run record ... --server JSON --client JSON [--gameover JSON]` records a playtest.
+  - `python -m bench.adaptive_run status --race blade` shows progress.
+- **Protocol changes made mid-race (all conditions, disclose these):**
+  1. The chase check also passes when zombies come within 6 studs.
+  2. The shop appearing also counts as proof of a wave transition.
+  3. From P7, bug reports include Output-window "Infinite yield" warnings.
+  4. Probe v2 (`observeAlive`) keeps the test player alive; added after game over hid the shop.
 
-## Waiting
-- Held-out set frozen (12 tasks: P1 H1–H4, P2 A1–D2; TOTAL 1ed3462b…). P2 fixture done (56 tests, 5 captured sessions, v2 refactor). Gate (c): user OK needed before the held-out run.
+### Race incident (19:15 ET)
+- The Rojo server for `none` (port 34873) crashed at 17:22, during P6 (Rojo panic on a deleted file). From P7 on, the `none` Studio window tested stale P6 code, so none's P7–P12 results are INVALID. Two of its fix sessions made no changes.
+- The agentsmd and devmemory windows were verified in sync (byte counts match).
+- Low memory then killed the round-13 sessions (no partial edits) and the UI server. Each of the 4 Studio windows uses about 2 GB.
+- Fix going forward: verify Studio matches the files before every playtest; restart Rojo when it dies.
 
-## Running / demo game (Fri ~3:30 PM ET)
-- Held-out run started (suite `heldout`, code rev at launch logged in rows). Do not tune after seeing results.
-- Demo game changed per user: "Blade Swarm" (orbiting blades vs zombie waves, coins per kill, random upgrade shop between waves). Rojo project in `demo/blade-swarm/`, written by a Sonnet subagent. CoinRush (P1) stays frozen as the benchmark fixture.
-- Tooling: Rojo 7.7.1 at `C:\Users\thfal\tools\rojo-7.7.1\rojo.exe`, Rojo Studio plugin installed. Roblox Studio built-in MCP registered (`claude mcp add Roblox_Studio`, local scope). Its tools need a Claude Code restart (`claude --continue`) and "Enable Studio as MCP server" in Studio (Assistant > ... > Manage MCP Servers).
-- Plan after restart: `rojo serve demo/blade-swarm/default.project.json` -> Rojo plugin Connect -> use the Studio MCP to build the map, lighting, Creator Store zombie model and props, playtest, fix -> save the place.
+## Also built today
+- DevMemory UI: `python -m devmem ui --project P --store S`, an Obsidian-style local app.
+- Blade Swarm showcase: `demo/blade-swarm` (code) and `demo/BladeSwarm_Final.rbxl` (place with map, lighting and zombie model). `demo/blade-swarm/studio/build_map.luau` rebuilds the map.
 
 ## Next
-- Held-out run: 12 tasks × C0, C1, C2, C3 × 3 repeats (Haiku), C3nofresh on the stale tasks, C0/C1 × 2 on Sonnet. One time only, then report as-is.
-- Charts, deck (8–10 slides), video (3 min or less), project page.
+- Finish the race, then write its report and screenshots.
+- Second race on a web app (the user chose option B; the team task board is my recommendation, awaiting confirmation).
+- Deck (8–10 slides), video (3 min or less), project page. Target: published by 11 AM ET Sat.
 
 ## Known issues
-- Never write Python containing `\\` escapes through a bash heredoc in this environment: backslashes get collapsed. Use the Write tool.
-- Don't leave the shell cwd inside a fixture dir (Windows locks it, and `rmtree` fails).
-- Downloading the official `luau` CLI was blocked by the permission classifier, so P1 graders are static only.
-- `total_cost_usd` is API list-price equivalent, not subscription spend.
+- Never write Python containing `\\` through a bash heredoc here; use the Write tool.
+- Don't leave the shell cwd inside fixture dirs.
+- The Rojo plugin can auto-connect new windows. Check each window holds the right code before playtesting.
