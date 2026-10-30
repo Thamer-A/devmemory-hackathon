@@ -1,0 +1,38 @@
+{
+ "about": "Adaptive multi-session race toward a Blade Swarm-like game. After every session the game is playtested in Roblox Studio by the SAME automated probe for every condition. The next prompt is chosen by a fixed rule (bench/adaptive_run.py): if any required check failed, a bug report written from the failed checks (plain user words + error lines); otherwise the next roadmap feature. Stops when the roadmap is done and every check passes, or at max_prompts.",
+ "model": "sonnet",
+ "max_turns": 60,
+ "timeout_s": 1500,
+ "max_prompts": 16,
+ "scaffold": "bench/series/blade/scaffold",
+ "agents_md": "# Blade Swarm\n\nRoblox game built with Rojo (`default.project.json`). Code lives in `src/shared`, `src/server`, `src/client`.\n\nKeep this file up to date: after every change, record the design decisions (numbers, names, colors, rules) and where things live, so the next session can continue without re-reading everything.\n",
+ "roadmap": [
+  {"id": "R1", "requires": ["blades_render"], "prompt": "I'm making a Roblox game with Rojo in this folder. Concept: \"Blade Swarm\" - each player has blades orbiting around them, zombies swarm in waves, blades kill zombies, kills give coins, and between waves you buy random upgrades. Today just the first piece: make each player's blades orbit around them and look cool. Decisions: start with 2 blades, orbit radius 7 studs, neon cyan blades. Keep all tunable numbers in one Config module in src/shared, and put every RemoteEvent in a single Remotes module."},
+  {"id": "R2", "requires": ["zombies_spawn", "zombies_chase", "kills_and_coins"], "prompt": "Next: add zombies. They should spawn around the edge of the arena, chase the nearest player, and die when the blades hit them. Each blade hit does 20 damage and zombies have 60 health. Give 5 coins per kill and show coins and kills on the leaderboard."},
+  {"id": "R3", "requires": ["waves_advance", "player_damaged"], "prompt": "Add the wave system. Wave 1 has 8 zombies and each wave adds 4 more. There's a 20 second break between waves. Zombie health goes up 15% per wave. Zombies should also hurt the player on contact, 10 damage per second."},
+  {"id": "R4", "requires": ["shop_offers"], "prompt": "Now the upgrade shop for the break between waves. Each player gets 3 random offers. Upgrades: +1 Blade (Rare, 60 coins), Sharper Blades +25% damage (Common, 30), Faster Spin +20% spin speed (Common, 30), Longer Reach +2 studs (Common, 35), Vitality +25 max HP (Common, 25), Vampiric heals 2 HP per kill (Rare, 55), Greed +25% coins (Rare, 50). Rerolling the offers costs 10 coins. All purchase logic must be server-side."},
+  {"id": "R5", "requires": ["hud_visible"], "prompt": "The UI is ugly. Make a proper HUD and shop UI: dark navy rounded panels, cyan accent, gold for coins, and rarity colors Common = gray, Rare = blue, Epic = purple. Show the wave number, a countdown timer, zombies left, coins, and a health bar."},
+  {"id": "R6", "requires": [], "prompt": "Add an Epic upgrade called Twin Spin: +2 blades for 120 coins. Make sure it shows up with the rarity colors we picked."},
+  {"id": "R7", "requires": ["game_over_reset"], "prompt": "Playtest feedback: the waves ramp up too hard and coins feel too slow. Lower the zombie health growth to 10% per wave and double the coins per kill from what we set. Also add a game over: if every player is dead, reset the run back to wave 1."},
+  {"id": "R8", "requires": ["damage_numbers"], "prompt": "Final polish: floating damage numbers when blades hit a zombie, a burst effect when a zombie dies, and a \"+coins\" popup for the player who got the kill. Don't break anything we built."},
+  {"id": "R9", "requires": ["map_dressed"], "prompt": "The arena looks empty. Make it look like a graveyard at dusk: stone walls with torches, gravestones and dead trees around the edges (keep the middle clear for fighting), warm lighting with some haze. Build it from code so it's part of the project."},
+  {"id": "R10", "requires": ["zombies_look"], "prompt": "The zombies still look too plain. Make them look like actual zombies: green skin, ragged dark clothes, arms reaching forward, and a walk animation if you can."}
+ ],
+ "always_required": ["no_errors"],
+ "bug_text": {
+  "no_errors": "The Output window shows errors",
+  "blades_render": "I don't see any blades orbiting my character.",
+  "zombies_spawn": "No zombies spawn.",
+  "zombies_chase": "The zombies don't come toward me.",
+  "kills_and_coins": "Killing zombies doesn't give me coins or kills (the leaderboard doesn't change).",
+  "waves_advance": "The game never gets to wave 2.",
+  "player_damaged": "Zombies don't hurt me when they touch me.",
+  "shop_offers": "I never see the upgrade shop with offers between waves.",
+  "hud_visible": "I can't see a proper HUD (wave number, timer and health).",
+  "game_over_reset": "When I die nothing happens: no game over and no reset to wave 1.",
+  "damage_numbers": "No floating damage numbers show up when the blades hit zombies.",
+  "map_dressed": "The arena still looks plain and empty.",
+  "zombies_look": "The zombies still look like plain blocks."
+ },
+ "upgrade_names": ["+1 Blade", "Sharper Blades", "Faster Spin", "Longer Reach", "Vitality", "Vampiric", "Greed", "Twin Spin"]
+}
