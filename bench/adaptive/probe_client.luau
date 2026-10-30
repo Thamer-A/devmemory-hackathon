@@ -52,7 +52,7 @@ function Probe.observe(duration: number, names: { string }?)
 				if d:IsA("BillboardGui") and d.Enabled then bb += 1 end
 				if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text ~= "" and visible(d) then
 					local t = string.sub(d.Text, 1, 60)
-					if not texts[t] and #order < 250 then
+					if not texts[t] and #order < 1500 then
 						texts[t] = true
 						table.insert(order, t)
 					end

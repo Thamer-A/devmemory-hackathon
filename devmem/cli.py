@@ -28,10 +28,13 @@ def _store(a) -> Path:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="devmem")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("scan", "run", "import", "pack", "status", "hook"):
+    for name in ("scan", "run", "import", "pack", "status", "hook", "ui"):
         p = sub.add_parser(name)
         p.add_argument("--project", default=".")
         p.add_argument("--store", help="memory store dir (default <project>/.devmemory)")
+        if name == "ui":
+            p.add_argument("--port", type=int, default=8765)
+            p.add_argument("--no-browser", action="store_true")
         if name == "run":
             p.add_argument("prompt")
             p.add_argument("--model", default="sonnet")
@@ -47,7 +50,10 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     project = Path(a.project).resolve()
 
-    if a.cmd == "scan":
+    if a.cmd == "ui":
+        from .ui_server import serve
+        serve(project, _store(a), port=a.port, open_browser=not a.no_browser)
+    elif a.cmd == "scan":
         m = scan(project, _store(a))
         print(f"indexed {len(m['files'])} files, 0 LLM tokens -> {_store(a) / 'PROJECT.md'}")
     elif a.cmd == "run":
