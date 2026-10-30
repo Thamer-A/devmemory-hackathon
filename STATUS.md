@@ -23,6 +23,12 @@
 ## Waiting
 - Held-out set frozen (12 tasks: P1 H1–H4, P2 A1–D2; TOTAL 1ed3462b…). P2 fixture done (56 tests, 5 captured sessions, v2 refactor). Gate (c): user OK needed before the held-out run.
 
+## Running / demo game (Fri ~3:30 PM ET)
+- Held-out run started (suite `heldout`, code rev at launch logged in rows). Do not tune after seeing results.
+- Demo game changed per user: "Blade Swarm" (orbiting blades vs zombie waves, coins per kill, random upgrade shop between waves). Rojo project in `demo/blade-swarm/`, written by a Sonnet subagent. CoinRush (P1) stays frozen as the benchmark fixture.
+- Tooling: Rojo 7.7.1 at `C:\Users\thfal\tools\rojo-7.7.1\rojo.exe`, Rojo Studio plugin installed. Roblox Studio built-in MCP registered (`claude mcp add Roblox_Studio`, local scope). Its tools need a Claude Code restart (`claude --continue`) and "Enable Studio as MCP server" in Studio (Assistant > ... > Manage MCP Servers).
+- Plan after restart: `rojo serve demo/blade-swarm/default.project.json` -> Rojo plugin Connect -> use the Studio MCP to build the map, lighting, Creator Store zombie model and props, playtest, fix -> save the place.
+
 ## Next
 - Held-out run: 12 tasks × C0, C1, C2, C3 × 3 repeats (Haiku), C3nofresh on the stale tasks, C0/C1 × 2 on Sonnet. One time only, then report as-is.
 - Charts, deck (8–10 slides), video (3 min or less), project page.
