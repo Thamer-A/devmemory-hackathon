@@ -3,3 +3,7 @@
 {"suite": "dev2", "project": "P1", "scan_s": 0.026, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
 {"suite": "dev3", "project": "P1", "scan_s": 0.029, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
 {"suite": "dev3", "project": "P1", "scan_s": 0.024, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "heldout", "project": "P1", "scan_s": 0.036, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "heldout", "project": "P2", "scan_s": 0.035, "files": 26, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "heldout", "project": "P1", "scan_s": 0.052, "files": 27, "llm_tokens": 0, "sessions_captured": 5}
+{"suite": "heldout", "project": "P2", "scan_s": 0.023, "files": 26, "llm_tokens": 0, "sessions_captured": 5}
