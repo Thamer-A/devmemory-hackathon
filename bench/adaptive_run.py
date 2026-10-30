@@ -76,7 +76,7 @@ def compute_checks(spec: dict, server: dict, client: dict, gameover: dict | None
     return c, errors
 
 
-def bug_prompt(spec: dict, failed: list[str], errors: list[str]) -> str:
+def bug_prompt(spec: dict, failed: list[str], errors: list[str], warnings: list[str] | None = None) -> str:
     lines = ["I playtested it. Problems:"]
     for f in failed:
         if f == "no_errors":
@@ -84,6 +84,10 @@ def bug_prompt(spec: dict, failed: list[str], errors: list[str]) -> str:
             lines += [f"    {e}" for e in errors[:3]]
         else:
             lines.append("- " + spec["bug_text"][f])
+    # what a user would also see in Studio's Output window (added mid-race for all conditions)
+    if warnings:
+        lines.append("The Output window also shows these warnings:")
+        lines += [f"    {w}" for w in warnings[:3]]
     lines.append("Please fix these before adding anything new.")
     return "\n".join(lines)
 
@@ -121,7 +125,7 @@ def cmd_next(a, spec, sdir):
     req = required(spec, st["features"])
     failed = [k for k in req if st["last_checks"] is not None and not st["last_checks"].get(k)]
     if failed:
-        kind, step_id, prompt = "fix", f"P{st['prompts'] + 1}-fix", bug_prompt(spec, failed, st["last_errors"])
+        kind, step_id, prompt = "fix", f"P{st['prompts'] + 1}-fix", bug_prompt(spec, failed, st["last_errors"], st.get("last_warnings"))
     elif st["features"] < len(spec["roadmap"]):
         f = spec["roadmap"][st["features"]]
         kind, step_id, prompt = "feature", f"P{st['prompts'] + 1}-{f['id']}", f["prompt"]
@@ -171,7 +175,8 @@ def cmd_record(a, spec, sdir):
     checks, errors = compute_checks(spec, server, client, gameover)
     req = required(spec, st["features"])
     failed = [k for k in req if not checks.get(k)]
-    st["last_checks"], st["last_errors"], st["awaiting_playtest"] = checks, errors, False
+    warnings = list(dict.fromkeys(list(server.get("warnings", [])) + list(client.get("warnings", []))))
+    st["last_checks"], st["last_errors"], st["last_warnings"], st["awaiting_playtest"] = checks, errors, warnings, False
     step_id = st["history"][-1]["step"]
     st["history"][-1].update(failed=failed)
     if not failed and st["features"] >= len(spec["roadmap"]):
@@ -179,7 +184,7 @@ def cmd_record(a, spec, sdir):
     state_p.write_text(json.dumps(st, indent=1), encoding="utf-8")
     with open(RESULTS / f"adaptive_{a.race}.jsonl", "a", encoding="utf-8") as f:
         f.write(json.dumps({"type": "playtest", "race": a.race, "condition": a.condition, "tag": a.tag, "step": step_id,
-                            "required": req, "failed": failed, "checks": checks, "errors": errors[:5],
+                            "required": req, "failed": failed, "checks": checks, "errors": errors[:5], "warnings": warnings[:5],
                             "server": server, "client": {k: v for k, v in client.items() if k != "sample"},
                             "gameover": gameover}) + "\n")
     print(json.dumps({"step": step_id, "failed": failed, "errors": errors[:2], "done": st["done"]}))
