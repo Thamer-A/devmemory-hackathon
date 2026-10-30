@@ -1,0 +1,16 @@
+[project]
+name = "devmem"
+version = "0.0.1"
+description = "Local-first project memory and task-specific context packs for AI coding sessions (hackathon prototype)"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+devmem = "devmem.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["devmem"]

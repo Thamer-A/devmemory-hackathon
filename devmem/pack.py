@@ -145,6 +145,7 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
     m = json.loads(map_path.read_text(encoding="utf-8")) if map_path.exists() else scan(project, store)
     q = tokenize(task)
     qset = set(q)
+    m["files"] = {rel: i for rel, i in m["files"].items() if (project / rel).exists()}  # map may lag the tree
     texts = {rel: (project / rel).read_text(encoding="utf-8", errors="replace") for rel in m["files"]}
     files_bm = BM25({rel: _file_doc(rel, i, texts[rel]) for rel, i in m["files"].items()})
     fscores = sorted(((files_bm.score(rel, q), rel) for rel in m["files"]), key=lambda x: -x[0][0])
@@ -170,15 +171,13 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
                 picked_sessions.append((sc, hits, s))
         picked_sessions = picked_sessions[:max_sessions]
         chosen = {id(s) for _, _, s in picked_sessions}
-        file_terms = set()
-        for _, _, rel in picked_files:
-            file_terms |= set(tokenize(m["files"][rel]["module"]))
+        modules = {m["files"][rel]["module"] for _, _, rel in picked_files if len(m["files"][rel]["module"]) > 3}
         for s in sessions:
             if id(s) in chosen:
                 continue
             for sent in decision_sentences(s.get("prompt", "")):
                 st = set(tokenize(sent))
-                if ({t for t in st & qset if gidf.get(t, 0) >= 1.0} or st & file_terms):
+                if ({t for t in st & qset if gidf.get(t, 0) >= 1.0} or any(mod in sent for mod in modules)):
                     decisions.append((sent, s))
 
     # ---- render, cheapest/most general first, stop at budget ----
