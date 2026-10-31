@@ -38,8 +38,7 @@ MEM = Path.home() / "devmem-xtool-mem"
 OUT = HERE / "results"
 
 
-AGENTS_LINE = "This project uses DevMemory. Before starting any task, call the devmemory get_context_pack tool with the user's request.
-"
+AGENTS_LINE = "This project uses DevMemory. Before starting any task, call the devmemory get_context_pack tool with the user's request.\n"
 
 
 def setup():
@@ -72,8 +71,12 @@ def run(variant, rep):
     cmd += {"without": ["--no-pack"], "pack": [], "mcp": ["--mcp"], "mcp_agents": ["--mcp"]}[variant]
     p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     ok, line = check(proj)
-    meta = sorted((store / "sessions").glob("*.meta.json"))[-1]
+    metas = sorted((store / "sessions").glob("*.meta.json"))
+    metas = [x for x in metas if x.stem.split(".")[0] > "20261031T030000"]  # this run's sessions only
+    # the adapter's own record (the agent may also have recorded a session itself through MCP end_session)
+    meta = next(x for x in metas if json.loads(x.read_text(encoding="utf-8"))["provider"].startswith("codex-cli"))
     m = json.loads(meta.read_text(encoding="utf-8"))
+    self_recorded = [x for x in metas if x != meta]
     raw = (store / "sessions" / m["raw_record"]).read_text(encoding="utf-8")
     calls = [json.loads(l) for l in (store / "mcp_calls.jsonl").read_text(encoding="utf-8").splitlines()] \
         if (store / "mcp_calls.jsonl").exists() else []
@@ -88,6 +91,8 @@ def run(variant, rep):
     shutil.copy(store / "sessions" / m["raw_record"], dest / "session.jsonl")
     if calls:
         shutil.copy(store / "mcp_calls.jsonl", dest / "mcp_calls.jsonl")
+    for x in self_recorded:  # sessions the agent recorded itself via MCP (begin/end_session)
+        shutil.copy(x, dest / ("agent_recorded_" + x.name))
     shutil.rmtree(proj.parent, ignore_errors=True)
     shutil.rmtree(store, ignore_errors=True)
     return {"variant": variant, "repeat": rep, "colors_correct": ok, "all_correct": all(ok.values()), "line": line,

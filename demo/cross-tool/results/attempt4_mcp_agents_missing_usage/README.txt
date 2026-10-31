@@ -1,0 +1,1 @@
+mcp_agents runs whose saved record was the session Codex itself recorded via MCP end_session (so adapter usage was not saved). 3/3 correct, each called get_context_pack, begin_session, end_session. Re-run for token counts.
