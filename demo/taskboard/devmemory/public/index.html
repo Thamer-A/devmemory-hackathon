@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Task Board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Team Task Board</h1>
+  <form id="add-form">
+    <input id="title" type="text" placeholder="New card title" required maxlength="200" autocomplete="off">
+    <select id="column">
+      <option>To Do</option>
+      <option>In Progress</option>
+      <option>Done</option>
+    </select>
+    <select id="label">
+      <option value="">No label</option>
+      <option>Bug</option>
+      <option>Feature</option>
+      <option>Chore</option>
+    </select>
+    <select id="assignee" aria-label="Assignee">
+      <option value="">Unassigned</option>
+      <option>Alice</option>
+      <option>Bob</option>
+      <option>Carol</option>
+      <option>Dan</option>
+    </select>
+    <input id="due" type="date" title="Due date" aria-label="Due date">
+    <button type="submit">Add card</button>
+  </form>
+  <div id="search-bar">
+    <input id="search" type="search" placeholder="Search cards by title" aria-label="Search cards by title" autocomplete="off">
+    <button type="button" id="clear-filters">Clear filters</button>
+  </div>
+  <div id="filter-bar" role="group" aria-label="Filter by label"></div>
+  <div id="assignee-filter-bar" class="filter-bar" role="group" aria-label="Filter by assignee"></div>
+  <p id="error" role="alert"></p>
+</header>
+<main id="board"></main>
+<script src="app.js"></script>
+</body>
+</html>

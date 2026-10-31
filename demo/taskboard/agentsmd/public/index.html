@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Task Board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Team Task Board</h1>
+<form id="add-form">
+  <input id="title" placeholder="New card title" required>
+  <select id="label"><option value="">No label</option><option>Bug</option><option>Feature</option><option>Chore</option></select>
+  <select id="assignee"><option value="">Unassigned</option><option>Alice</option><option>Bob</option><option>Carol</option><option>Dan</option></select>
+  <input type="date" id="dueDate" title="Due date">
+  <button type="submit">Add card</button>
+</form>
+<div id="search-bar">
+  <input type="search" id="search" placeholder="Search cards by title" aria-label="Search cards by title">
+  <button type="button" id="clear-filters">Clear filters</button>
+</div>
+<div id="filters">
+  <button data-filter="" class="active">All</button>
+  <button data-filter="Bug">Bug</button>
+  <button data-filter="Feature">Feature</button>
+  <button data-filter="Chore">Chore</button>
+</div>
+<div id="assignee-filters">
+  <button data-assignee="" class="active">Everyone</button>
+  <button data-assignee="Alice">Alice</button>
+  <button data-assignee="Bob">Bob</button>
+  <button data-assignee="Carol">Carol</button>
+  <button data-assignee="Dan">Dan</button>
+</div>
+<main id="board"></main>
+<script src="app.js"></script>
+</body>
+</html>

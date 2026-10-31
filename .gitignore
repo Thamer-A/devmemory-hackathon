@@ -6,3 +6,8 @@ results/raw/
 *.log
 demo/build/
 docs/deck/node_modules
+
+# task board demo runtime files
+demo/taskboard/*/data/
+demo/taskboard/*/_server.log
+demo/taskboard/.chrome/
