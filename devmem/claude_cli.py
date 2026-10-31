@@ -37,13 +37,16 @@ def claude_executable() -> str:
 
 
 def build_command(prompt: str, model: str, max_turns: int, append_system_prompt: str | None = None,
-                  tools: list[str] | None = None, isolated: bool = True) -> list[str]:
+                  tools: list[str] | None = None, isolated: bool = True,
+                  allowed_tools: list[str] | None = None) -> list[str]:
     cmd = [claude_executable(), "-p", prompt, "--output-format", "stream-json", "--verbose",
            "--model", model, "--max-turns", str(max_turns),
            "--permission-mode", "acceptEdits", "--no-session-persistence"]
     if isolated:
         cmd += ["--setting-sources", "project", "--strict-mcp-config"]
     cmd += ["--tools", *(tools or DEFAULT_TOOLS)]
+    if allowed_tools:  # pre-approved commands (headless mode cannot ask for approval)
+        cmd += ["--allowedTools", *allowed_tools]
     if append_system_prompt:
         cmd += ["--append-system-prompt", append_system_prompt]
     return cmd
@@ -51,9 +54,9 @@ def build_command(prompt: str, model: str, max_turns: int, append_system_prompt:
 
 def run_claude(prompt: str, cwd: Path, stream_out: Path, model: str = "haiku", max_turns: int = 30,
                append_system_prompt: str | None = None, tools: list[str] | None = None,
-               timeout_s: int = 900, isolated: bool = True) -> dict:
+               timeout_s: int = 900, isolated: bool = True, allowed_tools: list[str] | None = None) -> dict:
     """Run one headless session in `cwd`, write the raw stream to `stream_out`, return metrics."""
-    cmd = build_command(prompt, model, max_turns, append_system_prompt, tools, isolated)
+    cmd = build_command(prompt, model, max_turns, append_system_prompt, tools, isolated, allowed_tools)
     stream_out.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     with open(stream_out, "w", encoding="utf-8", newline="\n") as f:

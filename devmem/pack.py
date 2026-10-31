@@ -125,11 +125,37 @@ def freshness(s: dict, project: Path) -> dict:
 DECISION_RE = re.compile(r"\b(decision|decided|agreed|must|never|always|only|instead of|do not|don't)\b", re.I)
 
 
+PROBLEM_RE = re.compile(r"\b(doesn't|does not|don't|didn't|isn't|is not|aren't|not working|can't|cannot|won't|"
+                        r"broken|errors?|fails?|failing|problems?|crash\w*|never see|nothing happens)\b", re.I)
+# concrete values a user specifies: colors, numbers, `identifiers`, "quoted names", API paths, HTTP codes
+SPEC_RE = re.compile(r"#[0-9a-fA-F]{6}\b|\b\d+(\.\d+)?\b|`[^`]+`|\"[^\"]+\"|/api/\S+|\b(GET|POST|PATCH|PUT|DELETE)\b")
+
+
+def _sentences(prompt: str) -> list[str]:
+    return [p.strip() for p in re.split(r"(?<=[.!?])\s+|;\s+|\n+", prompt or "") if p.strip()]
+
+
+def is_problem_report(prompt: str) -> bool:
+    """A prompt that mostly reports what is broken (a bug report), not what the user wants built."""
+    sents = _sentences(prompt)
+    return sum(1 for s in sents if PROBLEM_RE.search(s)) >= 2
+
+
 def decision_sentences(prompt: str) -> list[str]:
-    """Standing rules stated by the user (their own words), minus session-scoped instructions."""
-    parts = re.split(r"(?<=[.!?])\s+|;\s+|\n+", prompt or "")
-    return [p.strip() for p in parts
-            if DECISION_RE.search(p) and "this session" not in p.lower() and 20 <= len(p.strip()) <= 300]
+    """Standing rules stated by the user (their own words), minus session-scoped instructions
+    and minus bug-report lines (a description of a defect is not a decision)."""
+    if is_problem_report(prompt):
+        return []
+    return [p for p in _sentences(prompt)
+            if DECISION_RE.search(p) and "this session" not in p.lower() and 20 <= len(p) <= 300]
+
+
+def spec_sentences(prompt: str) -> list[str]:
+    """Requirements the user stated with concrete values (verbatim): '... Bug (red #e5484d) ...',
+    'POST /api/cards with JSON {title, column}', 'at most 3 cards'. Preserved, never paraphrased."""
+    if is_problem_report(prompt):
+        return []
+    return [p for p in _sentences(prompt) if SPEC_RE.search(p) and 15 <= len(p) <= 400]
 
 
 def _evidence_lines(text: str, q: set[str], max_lines: int = 2) -> list[tuple[int, str]]:
@@ -179,22 +205,55 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
                      **{s["_meta"]: _session_doc(s) for s in sessions}}).idf
         ss = sorted(((sb.score(s["_meta"], q), s) for s in sessions), key=lambda x: -x[0][0])
         best = ss[0][0][0] if ss else 0
+        informative = {t for t in qset if gidf.get(t, 0) >= 0.5}
+        seen_prompts, reports = set(), 0
         for (sc, hits), s in ss:
-            rare = [h for h in hits if gidf.get(h, 0) >= 1.8]
+            prompt_key = re.sub(r"\s+", " ", s.get("prompt", "")).strip().lower()
+            if prompt_key in seen_prompts:  # a repeated prompt (e.g. the same bug report) is shown once
+                continue
             in_prompt = set(tokenize(s.get("prompt", "")))
             # topic is set by what the user asked, not by incidental words in the assistant's output
-            if sc > 0 and sc >= 0.5 * best and len(rare) >= 2 and any(r in in_prompt for r in rare):
+            if sc > 0 and sc >= 0.4 * best and (set(hits) & in_prompt & (informative or qset)):
+                if is_problem_report(s.get("prompt", "")):
+                    if reports >= 1:
+                        continue
+                    reports += 1
                 picked_sessions.append((sc, hits, s))
+                seen_prompts.add(prompt_key)
         picked_sessions = picked_sessions[:max_sessions]
+        # repeated captures of the same bug report must not make the feature's own words look generic
+        informative = informative | qset
         chosen = {id(s) for _, _, s in picked_sessions}
+        # Origin lineage: the session where the user FIRST asked for the thing this task is about
+        # (earliest non-bug-report prompt mentioning the task's terms). A terse follow-up or bug report
+        # ("labels don't work") depends on the original spec, so it is always carried forward.
+        origins = []
+        for s in sessions:  # chronological
+            if is_problem_report(s.get("prompt", "")):
+                continue
+            overlap = set(tokenize(s.get("prompt", ""))) & informative
+            new_terms = overlap - {t for o in origins for t in o[1]}
+            if len(overlap) >= 2 and new_terms:
+                origins.append((s, overlap))
+        origins.sort(key=lambda o: -len(o[1]))
+        for s, overlap in origins[:2]:
+            if id(s) not in chosen:
+                picked_sessions.append((0.0, sorted(overlap) + ["origin of this feature"], s))
+                chosen.add(id(s))
         modules = {m["files"][rel]["module"] for _, _, rel in picked_files if len(m["files"][rel]["module"]) > 3}
+        seen_sent = set()
         for s in sessions:
+            # requirements with concrete values + explicit decisions, verbatim; not limited to
+            # sessions already shown above (their prompts are shown whole anyway)
             if id(s) in chosen:
                 continue
-            for sent in decision_sentences(s.get("prompt", "")):
+            for sent in decision_sentences(s.get("prompt", "")) + spec_sentences(s.get("prompt", "")):
+                if sent in seen_sent:
+                    continue
                 st = set(tokenize(sent))
-                if ({t for t in st & qset if gidf.get(t, 0) >= 1.0} or any(mod in sent for mod in modules)):
+                if (st & informative) or any(mod in sent for mod in modules):
                     decisions.append((sent, s))
+                    seen_sent.add(sent)
 
     # ---- render, cheapest/most general first, stop at budget ----
     out = ["# DevMemory context pack",
@@ -205,13 +264,50 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
            "",
            f"Project: {m['project']} ({m['engine']})"
            + (". Rojo: " + ", ".join(f"{k} -> {v}" for k, v in m["rojo"].items()) if m.get("rojo") else ""),
-           "", "## Conventions (observed in code)"]
-    out += [f"- {l}" for l in convention_lines(m)[:10]]
+           ""]
+    conv = convention_lines(m)[:10]
+    if conv:
+        out += ["## Conventions (observed in code)"] + [f"- {l}" for l in conv]
     info = {"mode": mode, "files": [], "sessions": [], "stale": 0, "items": 0}
 
     def fits(extra: list[str]) -> bool:
         return estimate_tokens("\n".join(out + extra)) <= budget
 
+    if decisions:
+        block = ["", "## What the user asked for earlier (verbatim requirements and decisions)"]
+        seen = set()
+        for sent, s in decisions[:8]:
+            if sent in seen:
+                continue
+            seen.add(sent)
+            block.append(f"- \"{sent}\" [session {str(s.get('session_id'))[:8]}, {s.get('started_at', '')[:10]}]")
+        if fits(block):
+            out += block
+            info["decisions"] = len(seen)
+    if picked_sessions:
+        out += ["", "## Relevant past sessions"]
+        for sc, hits, s in sorted(picked_sessions, key=lambda x: 0 if 'origin of this feature' in x[1] else 1):
+            fr = freshness(s, project) if mode == "full" else None
+            flag = ""
+            if fr and fr["status"] in ("stale", "partly-stale"):
+                flag = (f" **{fr['status'].upper()}**: edits no longer present in "
+                        f"{', '.join(fr['edits_gone_from'])}; code changed after this session, verify current code.")
+                info["stale"] += 1
+            elif fr and fr["status"] == "context-changed":
+                flag = f" (files it read have changed since: {', '.join(fr['read_files_changed'][:4])})"
+            prompt = re.sub(r"\s+", " ", s.get("prompt", ""))[:1500]
+            result = re.sub(r"\s+", " ", s.get("result_text") or "")[:500]
+            block = [f"- [session {str(s.get('session_id'))[:8]}, {s.get('started_at', '')[:10]}, "
+                     f"src: sessions/{s.get('raw_record')}]{flag}",
+                     f"  - User asked: \"{prompt}\"",
+                     f"  - Outcome (assistant-visible summary): {result}"]
+            if s.get("files_edited"):
+                block.append(f"  - Edited then: {', '.join(s['files_edited'])}")
+            if not fits(block):
+                break
+            out += block
+            info["sessions"].append({"session": s.get("session_id"), "score": round(sc, 2), "matched": hits,
+                                     "freshness": fr["status"] if fr else None})
     if picked_files:
         out += ["", "## Relevant files"]
         for s, hits, rel in picked_files:
@@ -233,41 +329,6 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
             out += block
             info["files"].append(rel)
 
-    if picked_sessions:
-        out += ["", "## Relevant past sessions"]
-        for sc, hits, s in picked_sessions:
-            fr = freshness(s, project) if mode == "full" else None
-            flag = ""
-            if fr and fr["status"] in ("stale", "partly-stale"):
-                flag = (f" **{fr['status'].upper()}**: edits no longer present in "
-                        f"{', '.join(fr['edits_gone_from'])}; code changed after this session, verify current code.")
-                info["stale"] += 1
-            elif fr and fr["status"] == "context-changed":
-                flag = f" (files it read have changed since: {', '.join(fr['read_files_changed'][:4])})"
-            prompt = re.sub(r"\s+", " ", s.get("prompt", ""))[:700]
-            result = re.sub(r"\s+", " ", s.get("result_text") or "")[:350]
-            block = [f"- [session {str(s.get('session_id'))[:8]}, {s.get('started_at', '')[:10]}, "
-                     f"src: sessions/{s.get('raw_record')}]{flag}",
-                     f"  - User asked: \"{prompt}\"",
-                     f"  - Outcome (assistant-visible summary): {result}"]
-            if s.get("files_edited"):
-                block.append(f"  - Edited then: {', '.join(s['files_edited'])}")
-            if not fits(block):
-                break
-            out += block
-            info["sessions"].append({"session": s.get("session_id"), "score": round(sc, 2), "matched": hits,
-                                     "freshness": fr["status"] if fr else None})
-    if decisions:
-        block = ["", "## Standing decisions stated by the user in past sessions"]
-        seen = set()
-        for sent, s in decisions[:4]:
-            if sent in seen:
-                continue
-            seen.add(sent)
-            block.append(f"- \"{sent}\" [session {str(s.get('session_id'))[:8]}, {s.get('started_at', '')[:10]}]")
-        if fits(block):
-            out += block
-            info["decisions"] = len(seen)
     text = "\n".join(out) + "\n"
     info["items"] = len(info["files"]) + len(info["sessions"]) + info.get("decisions", 0)
     info["tokens_est"] = estimate_tokens(text)

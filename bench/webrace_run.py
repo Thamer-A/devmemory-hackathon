@@ -37,11 +37,15 @@ from devmem.scan import scan  # noqa: E402
 
 CONDS = ["none", "agentsmd", "devmemory"]
 PORTS = {"none": 3101, "agentsmd": 3102, "devmemory": 3103}
+TAG = "r1"
+# round 2+: let agents run their own server/tests (headless mode cannot ask for approval); same for all
+ALLOWED = {"r1": None}
+DEFAULT_ALLOWED = ["Bash(node:*)", "Bash(curl:*)"]
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
 
-def paths(race, cond, tag="r1"):
-    root = RUN_ROOT / f"webrace_{race}_{cond}_{tag}"
+def paths(race, cond, tag=None):
+    root = RUN_ROOT / f"webrace_{race}_{cond}_{tag or TAG}"
     return root, root / "project", root / "devmemory", root / "state.json"
 
 
@@ -256,7 +260,7 @@ def session(race, cond, spec):
         st["done"] = True
         sp.write_text(json.dumps(st, indent=1), encoding="utf-8")
         return None
-    raw_dir = RESULTS / "raw" / f"webrace_{race}_{cond}_r1"
+    raw_dir = RESULTS / "raw" / f"webrace_{race}_{cond}_{TAG}"
     raw_dir.mkdir(parents=True, exist_ok=True)
     pack_text, info = None, {}
     if cond == "devmemory":
@@ -266,7 +270,8 @@ def session(race, cond, spec):
     started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     raw = raw_dir / f"{step}.jsonl"
     m = run_claude(prompt, work, raw, model=spec["model"], max_turns=spec["max_turns"],
-                   append_system_prompt=pack_text, timeout_s=spec["timeout_s"])
+                   append_system_prompt=pack_text, timeout_s=spec["timeout_s"],
+                   allowed_tools=ALLOWED.get(TAG, DEFAULT_ALLOWED))
     if cond == "devmemory":
         record_session(work, raw, prompt, started, store=store, extra={"race_step": step})
     git(work, "add", "-A")
@@ -275,7 +280,7 @@ def session(race, cond, spec):
     st["prompts"] += 1
     st["history"].append({"step": step, "kind": kind, "cost": m.get("cost_usd_list"), "tok": m.get("total_input_tokens")})
     sp.write_text(json.dumps(st, indent=1), encoding="utf-8")
-    row = {"type": "session", "race": race, "condition": cond, "step": step, "kind": kind, "prompt": prompt, "ts": started,
+    row = {"type": "session", "race": race, "condition": cond, "tag": TAG, "step": step, "kind": kind, "prompt": prompt, "ts": started,
            "diffstat": stat, "pack_tokens_est": info.get("tokens_est", 0),
            **{k: m.get(k) for k in ("exit_code", "num_turns", "cost_usd_list", "wall_s", "input_tokens", "output_tokens",
                                     "cache_read_tokens", "cache_creation_tokens", "total_input_tokens", "tool_calls",
@@ -288,7 +293,7 @@ def session(race, cond, spec):
 def playtest(race, cond, spec, step):
     root, work, store, sp = paths(race, cond)
     st = json.loads(sp.read_text(encoding="utf-8"))
-    shot = RESULTS / "raw" / f"webrace_{race}_{cond}_r1" / f"{step}.png"
+    shot = RESULTS / "raw" / f"webrace_{race}_{cond}_{TAG}" / f"{step}.png"
     checks, errors = probe(work, PORTS[cond], shot)
     req = required(spec, st["features"])
     failed = [k for k in req if not checks.get(k)]
@@ -298,7 +303,7 @@ def playtest(race, cond, spec, step):
         st["done"] = True
     sp.write_text(json.dumps(st, indent=1), encoding="utf-8")
     with open(RESULTS / f"webrace_{race}.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps({"type": "playtest", "race": race, "condition": cond, "step": step, "required": req,
+        f.write(json.dumps({"type": "playtest", "race": race, "condition": cond, "tag": TAG, "step": step, "required": req,
                             "failed": failed, "checks": checks, "errors": errors[:5]}) + "\n")
     print(f"{cond} {step}: failed={failed}", flush=True)
 
@@ -332,7 +337,10 @@ def main():
     ap.add_argument("cmd", choices=["init", "loop", "status", "probe"])
     ap.add_argument("--race", required=True)
     ap.add_argument("--condition")
+    ap.add_argument("--tag", default="r1")
     a = ap.parse_args()
+    global TAG
+    TAG = a.tag
     if a.cmd == "init":
         init(a.race)
     elif a.cmd == "loop":
