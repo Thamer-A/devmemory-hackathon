@@ -1,0 +1,8 @@
+{
+ "id": "E6",
+ "project": "P2",
+ "type": "stale",
+ "split": "heldout2",
+ "prompt": "In `report`, show next to each category's total how much of that category's budget was used that month, as a whole percent like `budget show` does. Leave it blank for categories without a budget.",
+ "max_turns": 30
+}

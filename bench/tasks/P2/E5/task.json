@@ -1,0 +1,8 @@
+{
+ "id": "E5",
+ "project": "P2",
+ "type": "stale",
+ "split": "heldout2",
+ "prompt": "Add `budget adjust PERCENT` to scale every category's budget limit at once: `budget adjust 10` raises them all by 10%, `budget adjust -25` lowers them by 25%. Round down to whole cents, and refuse an adjustment that would leave any limit at zero or below.",
+ "max_turns": 30
+}

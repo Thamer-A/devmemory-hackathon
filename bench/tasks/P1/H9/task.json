@@ -1,0 +1,8 @@
+{
+ "id": "H9",
+ "project": "P1",
+ "type": "stale",
+ "split": "heldout2",
+ "prompt": "Make enemies hit twice as hard during the last 30 seconds of a round. Keep both numbers tweakable.",
+ "max_turns": 30
+}

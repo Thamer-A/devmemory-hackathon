@@ -1,0 +1,105 @@
+diff --git a/src/client/controllers/ShopController.luau b/src/client/controllers/ShopController.luau
+index 40d3a34..813fa94 100644
+--- a/src/client/controllers/ShopController.luau
++++ b/src/client/controllers/ShopController.luau
+@@ -20,6 +20,7 @@ local buttons: { [number]: TextButton } = {}
+ -- Item id -> token of the purchase request still waiting on the server.
+ local pending: { [number]: number } = {}
+ local requestCount = 0
++local statusLabel: TextLabel? = nil
+ 
+ local function refreshButtons()
+ 	local theme = UIController.getTheme()
+@@ -118,12 +119,20 @@ local function buildPanel()
+ 	title.Size = UDim2.new(1, -32, 0, 30)
+ 	title.TextSize = 24
+ 
++	local status = UIController.createLabel(panel, "")
++	status.Name = "Status"
++	status.Position = UDim2.new(0, 16, 1, -30)
++	status.Size = UDim2.new(1, -32, 0, 22)
++	status.TextSize = 15
++	status.TextColor3 = Color3.fromRGB(255, 110, 110)
++	statusLabel = status
++
+ 	local list = Instance.new("ScrollingFrame")
+ 	list.Name = "Items"
+ 	list.BackgroundTransparency = 1
+ 	list.BorderSizePixel = 0
+ 	list.Position = UDim2.fromOffset(12, 50)
+-	list.Size = UDim2.new(1, -24, 1, -62)
++	list.Size = UDim2.new(1, -24, 1, -92)
+ 	list.CanvasSize = UDim2.new()
+ 	list.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ 	list.ScrollBarThickness = 6
+@@ -151,6 +160,17 @@ function ShopController.start()
+ 			owned[itemId] = true
+ 		end
+ 		table.clear(pending)
++		if statusLabel then
++			statusLabel.Text = ""
++		end
++		refreshButtons()
++	end)
++
++	Remotes.get("PurchaseRejected").OnClientEvent:Connect(function(itemId: number, reason: string)
++		pending[itemId] = nil
++		if statusLabel then
++			statusLabel.Text = reason
++		end
+ 		refreshButtons()
+ 	end)
+ end
+diff --git a/src/server/services/ShopService.luau b/src/server/services/ShopService.luau
+index 2b2c872..8816031 100644
+--- a/src/server/services/ShopService.luau
++++ b/src/server/services/ShopService.luau
+@@ -40,6 +40,10 @@ local function applyEquipped(player: Player)
+ 	humanoid.WalkSpeed = speed
+ end
+ 
++local function reject(player: Player, itemId: any, reason: string)
++	Remotes.get("PurchaseRejected"):FireClient(player, itemId, reason)
++end
++
+ local function onPurchaseItem(player: Player, itemId: any)
+ 	if type(itemId) ~= "number" then
+ 		Log.warn("ShopService", "bad item id from", player.Name)
+@@ -47,6 +51,7 @@ local function onPurchaseItem(player: Player, itemId: any)
+ 	end
+ 
+ 	if isOnCooldown(player) then
++		reject(player, itemId, "Slow down! Try again in a moment.")
+ 		return
+ 	end
+ 	lastPurchase[player] = os.clock()
+@@ -54,14 +59,17 @@ local function onPurchaseItem(player: Player, itemId: any)
+ 	local item = ItemCatalog.getById(itemId)
+ 	if item == nil then
+ 		Log.warn("ShopService", player.Name, "tried to buy unknown item", itemId)
++		reject(player, itemId, "That item does not exist.")
+ 		return
+ 	end
+ 
+ 	if DataService.hasItem(player, item.id) then
++		reject(player, itemId, "You already own this item.")
+ 		return
+ 	end
+ 
+ 	if not CurrencyService.canAfford(player, item.price) then
++		reject(player, itemId, "Not enough coins.")
+ 		return
+ 	end
+ 
+diff --git a/src/shared/Remotes.luau b/src/shared/Remotes.luau
+index 21e2c61..6c60a17 100644
+--- a/src/shared/Remotes.luau
++++ b/src/shared/Remotes.luau
+@@ -55,6 +55,7 @@ function Remotes.get(name: string): RemoteEvent
+ end
+ 
+ Remotes.define("PurchaseItem")
++Remotes.define("PurchaseRejected")
+ Remotes.define("CoinsChanged")
+ Remotes.define("RoundState")
+ Remotes.define("EquipItem")

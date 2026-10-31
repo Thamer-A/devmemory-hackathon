@@ -196,9 +196,11 @@ def _find_usage(events: list[dict]) -> dict:
 
 
 def codex(project: Path, prompt: str, model: str | None = None, store: Path | None = None,
-          budget: int = 1500, with_pack: bool = True, sandbox: str = "workspace-write", mcp: bool = False) -> Path:
+          budget: int = 1500, with_pack: bool = True, sandbox: str = "workspace-write", mcp: bool = False,
+          isolated: bool = False) -> Path:
     """Run `codex exec` on the task. with_pack: pack prepended to the prompt. mcp: instead expose DevMemory as an
-    MCP server for this run only (-c overrides; the user's Codex config is not modified)."""
+    MCP server for this run only (-c overrides; the user's Codex config is not modified). isolated: ignore the
+    user's Codex config (no personal plugins/MCP servers such as computer use), as in our benchmark runs."""
     from .pack import build_pack
     from .scan import scan
     project = Path(project).resolve()
@@ -212,12 +214,17 @@ def codex(project: Path, prompt: str, model: str | None = None, store: Path | No
     cmd = [exe, "exec", "--json", "--skip-git-repo-check", "--sandbox", sandbox, "-C", str(project), "-o", str(last)]
     if model:
         cmd += ["-m", model]
+    if isolated:  # keep only the Windows sandbox mode, without which the workspace is read-only on Windows
+        cmd += ["--ignore-user-config"] + (["-c", 'windows.sandbox="elevated"'] if os.name == "nt" else [])
     if mcp:
         repo = Path(__file__).resolve().parent.parent.as_posix()
         args = ["-m", "devmem.cli", "mcp", "--project", project.as_posix(), "--store", store.as_posix()]
         cmd += ["-c", f'mcp_servers.devmemory.command="{Path(sys.executable).as_posix()}"',
                 "-c", "mcp_servers.devmemory.args=" + json.dumps(args),
                 "-c", f'mcp_servers.devmemory.env={{PYTHONPATH="{repo}"}}']
+        for tool in ("get_context_pack", "list_sessions", "read_session", "begin_session", "end_session"):
+            # headless exec cannot ask the user, so DevMemory's own tools are pre-approved for this run
+            cmd += ["-c", f'mcp_servers.devmemory.tools.{tool}.approval_mode="approve"']
     before, started = snapshot(project), _now()
     proc = subprocess.run(cmd + ["-"], input=full, cwd=project, capture_output=True, text=True,
                           encoding="utf-8", errors="replace")

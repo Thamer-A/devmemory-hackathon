@@ -1,0 +1,29 @@
+diff --git a/src/server/services/DataService.luau b/src/server/services/DataService.luau
+index 093db3b..2bd4457 100644
+--- a/src/server/services/DataService.luau
++++ b/src/server/services/DataService.luau
+@@ -36,9 +36,10 @@ local function keyFor(player: Player): string
+ 	return "Player_" .. tostring(player.UserId)
+ end
+ 
+--- Older saves stored item names instead of ids. 'Speed Coil' was renamed to 'Speed Boots'.
++-- Older saves stored item names instead of ids. Item 1 was renamed 'Speed Coil' -> 'Speed Boots' -> 'Sprint Boots'.
+ local LEGACY_ITEM_IDS: { [string]: number } = {
+ 	["Speed Coil"] = 1,
++	["Speed Boots"] = 1,
+ }
+ 
+ -- Returns the item id for a saved entry, or nil if it does not match anything in the catalog.
+diff --git a/src/shared/ItemCatalog.luau b/src/shared/ItemCatalog.luau
+index f173884..6e7bcfb 100644
+--- a/src/shared/ItemCatalog.luau
++++ b/src/shared/ItemCatalog.luau
+@@ -12,7 +12,7 @@ export type Item = {
+ local items: { [number]: Item } = {
+ 	[1] = {
+ 		id = 1,
+-		name = "Speed Boots",
++		name = "Sprint Boots",
+ 		price = 100,
+ 		icon = "SpeedBootsIcon",
+ 		description = "Run faster through the arena.",

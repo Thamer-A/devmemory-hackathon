@@ -1,0 +1,8 @@
+{
+ "id": "E2",
+ "project": "P2",
+ "type": "code",
+ "split": "heldout2",
+ "prompt": "Add a `rename-category OLD NEW` command. Existing expenses and budgets should move with the category, the old name shouldn't come back afterwards, and renaming onto a name that already exists should be refused.",
+ "max_turns": 30
+}

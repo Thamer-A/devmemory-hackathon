@@ -1,0 +1,8 @@
+{
+ "id": "H7",
+ "project": "P1",
+ "type": "history",
+ "split": "heldout2",
+ "prompt": "Before we wire up the daily login reward we planned, add its streak logic as a pure shared module, src/shared/DailyStreak.luau: DailyStreak.dayIndex(unixTime) returns which day a timestamp falls on, and DailyStreak.advance(streak, lastClaimDay, today) returns the player's new streak, or nil if they already claimed today. Stick to the rules we agreed on.",
+ "max_turns": 30
+}

@@ -1,0 +1,83 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..0e624ce 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -23,6 +23,10 @@ def build_parser() -> argparse.ArgumentParser:
+     ls = sub.add_parser("list", help="list expenses")
+     ls.add_argument("--month", default=None, help="only this month (YYYY-MM)")
+ 
++    top = sub.add_parser("top", help="largest expenses first")
++    top.add_argument("--limit", type=int, default=5, help="how many to show (default 5)")
++    top.add_argument("--month", default=None, help="only this month (YYYY-MM)")
++
+     report = sub.add_parser("report", help="monthly totals by category")
+     report.add_argument("--month", required=True, help="month (YYYY-MM)")
+ 
+@@ -63,6 +67,18 @@ def _cmd_list(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+     ui.emit_table(rows, ["ID", "Date", "Category", "Amount", "Description"])
+ 
+ 
++def _cmd_top(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
++    records = expense_service.top_expenses(conn, args.limit, args.month)
++    if not records:
++        ui.emit("No expenses found.")
++        return
++    rows = [
++        (r.id, r.spent_on, r.category, money.format_cents(r.amount_cents), r.description)
++        for r in records
++    ]
++    ui.emit_table(rows, ["ID", "Date", "Category", "Amount", "Description"])
++
++
+ def _cmd_report(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+     report = report_service.monthly_report(conn, args.month)
+     if not report.lines:
+@@ -109,6 +125,7 @@ def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+ _HANDLERS = {
+     "add": _cmd_add,
+     "list": _cmd_list,
++    "top": _cmd_top,
+     "report": _cmd_report,
+     "budget": _cmd_budget,
+     "categories": _cmd_categories,
+diff --git a/ledgerly/repositories/expenses.py b/ledgerly/repositories/expenses.py
+index 5db24fd..5503eb2 100644
+--- a/ledgerly/repositories/expenses.py
++++ b/ledgerly/repositories/expenses.py
+@@ -36,6 +36,15 @@ def list_expenses(conn: sqlite3.Connection, month: str | None = None) -> list[sq
+     ).fetchall()
+ 
+ 
++def largest(conn: sqlite3.Connection, limit: int, month: str | None = None) -> list[sqlite3.Row]:
++    where = "" if month is None else " WHERE substr(e.spent_on, 1, 7) = ?"
++    args: tuple = () if month is None else (month,)
++    return conn.execute(
++        _SELECT + where + " ORDER BY e.amount_cents DESC, e.spent_on, e.id LIMIT ?",
++        (*args, limit),
++    ).fetchall()
++
++
+ def delete(conn: sqlite3.Connection, expense_id: int) -> bool:
+     cur = conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+     return cur.rowcount > 0
+diff --git a/ledgerly/services/expense_service.py b/ledgerly/services/expense_service.py
+index 9157969..4ed2d64 100644
+--- a/ledgerly/services/expense_service.py
++++ b/ledgerly/services/expense_service.py
+@@ -87,6 +87,16 @@ def list_expenses(conn: sqlite3.Connection, month: str | None = None) -> list[Ex
+     return [_to_record(row) for row in expense_repo.list_expenses(conn, month)]
+ 
+ 
++def top_expenses(
++    conn: sqlite3.Connection, limit: int = 5, month: str | None = None
++) -> list[ExpenseRecord]:
++    if limit < 1:
++        raise ValidationError(f"Limit must be at least 1, got {limit}")
++    if month is not None:
++        validate_month(month)
++    return [_to_record(row) for row in expense_repo.largest(conn, limit, month)]
++
++
+ def delete_expense(conn: sqlite3.Connection, expense_id: int) -> None:
+     if not expense_repo.delete(conn, expense_id):
+         raise NotFoundError(f"No expense with id {expense_id}")

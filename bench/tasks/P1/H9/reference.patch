@@ -1,0 +1,27 @@
+diff --git a/src/server/services/EnemyService.luau b/src/server/services/EnemyService.luau
+index 9f19d02..ad38735 100644
+--- a/src/server/services/EnemyService.luau
++++ b/src/server/services/EnemyService.luau
+@@ -185,6 +185,9 @@ local function onEnemyTouched(record: EnemyRecord, other: BasePart)
+ 	record.lastHit[player] = now
+ 
+ 	local damage = Config.Enemies[record.kind].damage
++	if RoundService.isPlaying() and RoundService.getTimeLeft() <= Config.FinalStretchSeconds then
++		damage *= Config.FinalStretchDamageMultiplier
++	end
+ 	humanoid:TakeDamage(damage)
+ 	Remotes.get("EnemyHit"):FireClient(player, record.kind, damage)
+ end
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..1cead72 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -44,6 +44,8 @@ local Config = {
+ 	MaxEnemies = 8,
+ 	EnemyAiInterval = 0.25,
+ 	EnemyHitCooldown = 1,
++	FinalStretchSeconds = 30,
++	FinalStretchDamageMultiplier = 2,
+ 	EnemySpawnZoneName = "EnemySpawns",
+ 	BruteSpawnChance = 0.25,
+ 	EnemyPlaceholderSize = Vector3.new(2, 5, 2),

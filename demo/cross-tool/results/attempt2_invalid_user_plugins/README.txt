@@ -1,0 +1,1 @@
+Attempt 2 (not counted): Codex loaded the user's personal config, including a computer-use MCP server that the MCP variant used to inspect open desktop windows; DevMemory MCP calls were blocked by approval policy (headless exec cannot approve). Pack vs without results here matched attempt 3 in direction (pack 2/2 correct, without 0/2).

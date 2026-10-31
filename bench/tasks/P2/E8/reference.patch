@@ -1,0 +1,12 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..169902b 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -61,6 +61,7 @@ def _cmd_list(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         for r in records
+     ]
+     ui.emit_table(rows, ["ID", "Date", "Category", "Amount", "Description"])
++    ui.emit(f"Total: {money.format_cents(sum(r.amount_cents for r in records))}")
+ 
+ 
+ def _cmd_report(conn: sqlite3.Connection, args: argparse.Namespace) -> None:

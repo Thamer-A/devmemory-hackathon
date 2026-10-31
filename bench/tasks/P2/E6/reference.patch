@@ -1,0 +1,26 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..ad666cd 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -68,10 +68,18 @@ def _cmd_report(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+     if not report.lines:
+         ui.emit(f"No expenses in {report.month}.")
+         return
+-    rows = [(line.category, money.format_cents(line.total_cents)) for line in report.lines]
+-    rows.append(("Total", money.format_cents(report.total_cents)))
++    used = {s.category: s.percent_used for s in budget_service.all_statuses(conn, report.month)}
++    rows = [
++        (
++            line.category,
++            money.format_cents(line.total_cents),
++            f"{used[line.category]}%" if line.category in used else "",
++        )
++        for line in report.lines
++    ]
++    rows.append(("Total", money.format_cents(report.total_cents), ""))
+     ui.emit(f"Report for {report.month}")
+-    ui.emit_table(rows, ["Category", "Total"])
++    ui.emit_table(rows, ["Category", "Total", "Budget used"])
+ 
+ 
+ def _cmd_budget(conn: sqlite3.Connection, args: argparse.Namespace) -> None:

@@ -1,0 +1,8 @@
+{
+ "id": "E7",
+ "project": "P2",
+ "type": "unrelated",
+ "split": "heldout2",
+ "prompt": "Add `money.split_cents(total_cents, parts)` that splits an amount into a list of `parts` whole-cent shares that differ by at most one cent and add up exactly to the total, larger shares first. A `parts` below 1 should be rejected like any other invalid input.",
+ "max_turns": 30
+}

@@ -1,0 +1,8 @@
+{
+ "id": "E4",
+ "project": "P2",
+ "type": "history",
+ "split": "heldout2",
+ "prompt": "Before we build the refund command itself, do the database groundwork from the refunds plan we made: the schema change, with existing ledgerly.db files upgraded automatically the next time the app runs. Nothing user-visible yet, and everything else has to keep working.",
+ "max_turns": 30
+}

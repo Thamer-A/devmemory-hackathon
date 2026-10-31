@@ -1,0 +1,95 @@
+diff --git a/ledgerly/cli.py b/ledgerly/cli.py
+index 57032d3..0c1f78a 100644
+--- a/ledgerly/cli.py
++++ b/ledgerly/cli.py
+@@ -34,6 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
+     budget_show = budget_sub.add_parser("show", help="show budgets against spending")
+     budget_show.add_argument("--month", default=None, help="month (YYYY-MM), default current")
+ 
++    rename = sub.add_parser("rename-category", help="rename a category")
++    rename.add_argument("old")
++    rename.add_argument("new")
++
+     categories = sub.add_parser("categories", help="list categories")
+     categories.add_argument(
+         "--sort-by-name", action="store_true", help="sort alphabetically instead of by id"
+@@ -106,12 +110,18 @@ def _cmd_categories(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
+         ui.emit(name)
+ 
+ 
++def _cmd_rename_category(conn: sqlite3.Connection, args: argparse.Namespace) -> None:
++    new_name = category_service.rename_category(conn, args.old, args.new)
++    ui.emit(f"Renamed {args.old} to {new_name}")
++
++
+ _HANDLERS = {
+     "add": _cmd_add,
+     "list": _cmd_list,
+     "report": _cmd_report,
+     "budget": _cmd_budget,
+     "categories": _cmd_categories,
++    "rename-category": _cmd_rename_category,
+ }
+ 
+ 
+diff --git a/ledgerly/repositories/categories.py b/ledgerly/repositories/categories.py
+index 9abea6a..f51cdc6 100644
+--- a/ledgerly/repositories/categories.py
++++ b/ledgerly/repositories/categories.py
+@@ -25,5 +25,16 @@ def get_by_name(conn: sqlite3.Connection, name: str) -> sqlite3.Row | None:
+     ).fetchone()
+ 
+ 
++def count(conn: sqlite3.Connection) -> int:
++    return int(conn.execute("SELECT COUNT(*) FROM categories").fetchone()[0])
++
++
++def rename(conn: sqlite3.Connection, category_id: int, new_name: str) -> None:
++    try:
++        conn.execute("UPDATE categories SET name = ? WHERE id = ?", (new_name, category_id))
++    except sqlite3.IntegrityError:
++        raise ConflictError(f"Category already exists: {new_name}") from None
++
++
+ def list_all(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+     return conn.execute("SELECT id, name FROM categories ORDER BY id").fetchall()
+diff --git a/ledgerly/services/category_service.py b/ledgerly/services/category_service.py
+index 6c4344e..899c04a 100644
+--- a/ledgerly/services/category_service.py
++++ b/ledgerly/services/category_service.py
+@@ -1,13 +1,15 @@
+ import sqlite3
+ 
+ from ledgerly import config
+-from ledgerly.errors import NotFoundError, ValidationError
++from ledgerly.errors import ConflictError, NotFoundError, ValidationError
+ from ledgerly.repositories import categories as category_repo
+ 
+ 
+ def ensure_defaults(conn: sqlite3.Connection) -> None:
+-    category_repo.ensure(conn, config.DEFAULT_CATEGORIES)
+-    conn.commit()
++    # Seed only a brand-new database, so renamed defaults do not reappear.
++    if category_repo.count(conn) == 0:
++        category_repo.ensure(conn, config.DEFAULT_CATEGORIES)
++        conn.commit()
+ 
+ 
+ def list_categories(conn: sqlite3.Connection) -> list[str]:
+@@ -22,3 +24,16 @@ def require_category(conn: sqlite3.Connection, name: str) -> sqlite3.Row:
+     if row is None:
+         raise NotFoundError(f"Unknown category: {cleaned}")
+     return row
++
++
++def rename_category(conn: sqlite3.Connection, old_name: str, new_name: str) -> str:
++    category = require_category(conn, old_name)
++    cleaned = (new_name or "").strip()
++    if not cleaned:
++        raise ValidationError("New category name is required")
++    existing = category_repo.get_by_name(conn, cleaned)
++    if existing is not None and existing["id"] != category["id"]:
++        raise ConflictError(f"Category already exists: {existing['name']}")
++    category_repo.rename(conn, category["id"], cleaned)
++    conn.commit()
++    return cleaned

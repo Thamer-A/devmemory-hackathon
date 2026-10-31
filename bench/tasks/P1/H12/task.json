@@ -1,0 +1,8 @@
+{
+ "id": "H12",
+ "project": "P1",
+ "type": "unrelated",
+ "split": "heldout2",
+ "prompt": "Let Maid also accept threads (like the ones task.spawn and task.delay return) and cancel them when it cleans up.",
+ "max_turns": 30
+}

@@ -1,0 +1,16 @@
+diff --git a/ledgerly/money.py b/ledgerly/money.py
+index 6aa99f7..c9ac106 100644
+--- a/ledgerly/money.py
++++ b/ledgerly/money.py
+@@ -28,3 +28,11 @@ def format_cents(cents: int, currency: str = config.DEFAULT_CURRENCY) -> str:
+     sign = "-" if cents < 0 else ""
+     whole, fraction = divmod(abs(cents), 100)
+     return f"{sign}{whole:,}.{fraction:02d} {currency}"
++
++
++def split_cents(total_cents: int, parts: int) -> list[int]:
++    """Split cents into `parts` shares that differ by at most one cent, larger shares first."""
++    if parts < 1:
++        raise ValidationError(f"Cannot split into {parts} parts")
++    base, extra = divmod(total_cents, parts)
++    return [base + 1] * extra + [base] * (parts - extra)

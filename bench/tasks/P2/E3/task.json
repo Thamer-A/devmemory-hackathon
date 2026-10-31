@@ -1,0 +1,8 @@
+{
+ "id": "E3",
+ "project": "P2",
+ "type": "history",
+ "split": "heldout2",
+ "prompt": "Add a `fix-dates` command that rewrites the dates still stored in the old format from that mixed-format date bug into the proper format, and prints how many rows it fixed.",
+ "max_turns": 30
+}

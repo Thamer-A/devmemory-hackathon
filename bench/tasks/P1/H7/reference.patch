@@ -1,0 +1,44 @@
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..1fe8489 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -10,6 +10,7 @@ local Config = {
+ 	RoundRewardCoins = 25,
+ 	KillReward = 10,
+ 	PurchaseCooldown = 0.5,
++	DailyStreakCap = 7,
+ 
+ 	-- Coins in the world
+ 	CoinSpawnInterval = 3,
+diff --git a/src/shared/DailyStreak.luau b/src/shared/DailyStreak.luau
+new file mode 100644
+index 0000000..f88e2f0
+--- /dev/null
++++ b/src/shared/DailyStreak.luau
+@@ -0,0 +1,26 @@
++--!strict
++-- Streak rules for the daily login reward. Days are counted in UTC: a day starts at 00:00 UTC.
++local Config = require(script.Parent.Config)
++
++local SECONDS_PER_DAY = 86400
++
++local DailyStreak = {}
++
++-- Day number (days since the Unix epoch, UTC) that a Unix timestamp falls on.
++function DailyStreak.dayIndex(unixTime: number): number
++	return math.floor(unixTime / SECONDS_PER_DAY)
++end
++
++-- New streak for a claim on `today`, or nil if the player already claimed today.
++-- Claiming on the next day extends the streak (capped); missing a full day resets it to 1.
++function DailyStreak.advance(streak: number?, lastClaimDay: number?, today: number): number?
++	if lastClaimDay == today then
++		return nil
++	end
++	if lastClaimDay ~= nil and today - lastClaimDay == 1 then
++		return math.min((streak or 0) + 1, Config.DailyStreakCap)
++	end
++	return 1
++end
++
++return DailyStreak

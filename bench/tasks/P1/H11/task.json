@@ -1,0 +1,8 @@
+{
+ "id": "H11",
+ "project": "P1",
+ "type": "unrelated",
+ "split": "heldout2",
+ "prompt": "Add a MathUtil.formatDuration(seconds) function that returns \"M:SS\" (75 -> \"1:15\"), or \"H:MM:SS\" once the duration reaches an hour (3725 -> \"1:02:05\"). Drop fractions of a second and treat negative input as 0.",
+ "max_turns": 30
+}

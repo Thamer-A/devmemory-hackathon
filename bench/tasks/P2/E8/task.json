@@ -1,0 +1,8 @@
+{
+ "id": "E8",
+ "project": "P2",
+ "type": "unrelated",
+ "split": "heldout2",
+ "prompt": "Have `list` end with a line showing the total amount of the expenses it listed.",
+ "max_turns": 30
+}

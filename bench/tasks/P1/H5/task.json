@@ -1,0 +1,8 @@
+{
+ "id": "H5",
+ "project": "P1",
+ "type": "code",
+ "split": "heldout2",
+ "prompt": "Reward kill streaks: every 5 enemy kills in a row without dying should give the player a 50 coin bonus. Keep both numbers easy to tweak.",
+ "max_turns": 30
+}

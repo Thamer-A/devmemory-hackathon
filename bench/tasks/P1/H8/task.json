@@ -1,0 +1,8 @@
+{
+ "id": "H8",
+ "project": "P1",
+ "type": "history",
+ "split": "heldout2",
+ "prompt": "Rename the Speed Boots item to Sprint Boots. Remember what happened to players the last time we renamed an item, and make sure that can't happen again with this rename.",
+ "max_turns": 30
+}

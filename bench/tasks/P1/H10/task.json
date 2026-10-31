@@ -1,0 +1,8 @@
+{
+ "id": "H10",
+ "project": "P1",
+ "type": "stale",
+ "split": "heldout2",
+ "prompt": "When the server rejects a shop purchase (not enough coins, already owned, still on cooldown), tell that player's client right away so the Buy button re-enables immediately and the shop shows why it failed.",
+ "max_turns": 30
+}

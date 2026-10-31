@@ -9,6 +9,8 @@ in a past Claude Code session. Three variants on identical copies:
   mcp      - no pack; DevMemory offered as an MCP server for this run (Codex decides whether to call it)
 All runs are captured by DevMemory's tool-agnostic adapter (snapshot diff + `codex exec --json`).
 
+Codex runs with --ignore-user-config (via `devmem codex --isolated`) so personal plugins such as computer
+use are not loaded: in attempt 2 the MCP variant used a computer-use server to inspect open desktop windows.
 Isolation: attempt 1 put the copies in sibling folders inside this repo, and Codex (without memory)
 searched the parent folders and found the other copy. Now each variant runs alone in a fresh folder
 under ~/devmem-xtool/ (outside the repo), the memory store lives in a separate tree, and each run's
@@ -59,7 +61,7 @@ def check(proj):
 
 def run(variant, rep):
     proj, store = setup()
-    cmd = [sys.executable, "-m", "devmem.cli", "codex", TASK, "--project", str(proj), "--store", str(store), "--model", MODEL]
+    cmd = [sys.executable, "-m", "devmem.cli", "codex", TASK, "--project", str(proj), "--store", str(store), "--model", MODEL, "--isolated"]
     cmd += {"without": ["--no-pack"], "pack": [], "mcp": ["--mcp"]}[variant]
     p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     ok, line = check(proj)
@@ -68,6 +70,8 @@ def run(variant, rep):
     raw = (store / "sessions" / m["raw_record"]).read_text(encoding="utf-8")
     calls = [json.loads(l) for l in (store / "mcp_calls.jsonl").read_text(encoding="utf-8").splitlines()] \
         if (store / "mcp_calls.jsonl").exists() else []
+    servers = sorted({json.loads(l)["event"]["item"].get("server") for l in raw.splitlines()
+                      if '"mcp_tool_call"' in l and json.loads(l).get("type") == "tool_event"} - {None})
     # did the agent look outside its project folder?
     outside = sorted(set(re.findall(r"\.\.[\\/]|devmem-xtool|MiskXHumain|devmem-runs", raw)) - {"devmem-xtool"})
     dest = OUT / f"{variant}_r{rep}"
@@ -80,7 +84,7 @@ def run(variant, rep):
     shutil.rmtree(proj.parent, ignore_errors=True)
     shutil.rmtree(store, ignore_errors=True)
     return {"variant": variant, "repeat": rep, "colors_correct": ok, "all_correct": all(ok.values()), "line": line,
-            "usage": m.get("usage"), "files_edited": m.get("files_edited"), "mcp_calls": [c["tool"] for c in calls],
+            "usage": m.get("usage"), "files_edited": m.get("files_edited"), "mcp_calls": [c["tool"] for c in calls], "mcp_servers_used": servers,
             "looked_outside_project": outside, "errors": m.get("errors"),
             "final_message": (m.get("result_text") or "")[:300], "exit": p.returncode}
 

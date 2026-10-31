@@ -51,6 +51,7 @@ def main(argv=None) -> int:
             p.add_argument("--model")
             p.add_argument("--no-pack", action="store_true", help="capture only, no context pack")
             p.add_argument("--mcp", action="store_true", help="give Codex DevMemory as an MCP server instead of a pack")
+            p.add_argument("--isolated", action="store_true", help="ignore the user's Codex config (no personal plugins)")
         if name == "wrap":
             p.add_argument("--prompt", required=True)
             p.add_argument("--provider", default="cli")
@@ -82,7 +83,7 @@ def main(argv=None) -> int:
         from . import generic
         if a.cmd == "codex":
             meta = generic.codex(project, a.prompt, model=a.model, store=_store(a),
-                                 with_pack=not (a.no_pack or a.mcp), mcp=a.mcp)
+                                 with_pack=not (a.no_pack or a.mcp), mcp=a.mcp, isolated=a.isolated)
         elif a.cmd == "wrap":
             cmd = a.command[1:] if a.command[:1] == ["--"] else a.command
             meta = generic.wrap(project, a.prompt, cmd, provider=a.provider, store=_store(a), with_pack=not a.no_pack)

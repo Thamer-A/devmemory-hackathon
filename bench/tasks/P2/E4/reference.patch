@@ -1,0 +1,31 @@
+diff --git a/ledgerly/db.py b/ledgerly/db.py
+index d6a2d10..a52b46c 100644
+--- a/ledgerly/db.py
++++ b/ledgerly/db.py
+@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS expenses (
+     description TEXT NOT NULL,
+     category_id INTEGER NOT NULL REFERENCES categories(id),
+     spent_on TEXT NOT NULL,
+-    created_at TEXT NOT NULL
++    created_at TEXT NOT NULL,
++    refund_of INTEGER REFERENCES expenses(id)
+ );
+ 
+ CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on);
+@@ -36,6 +37,16 @@ def get_connection(path: str | None = None) -> sqlite3.Connection:
+     return conn
+ 
+ 
++def _migrate(conn: sqlite3.Connection) -> None:
++    """Upgrade databases created before a column existed (CREATE TABLE IF NOT EXISTS skips them)."""
++    columns = {row["name"] for row in conn.execute("PRAGMA table_info(expenses)")}
++    if "refund_of" not in columns:
++        # Refunds: a negative expense row linked to the original; NULL for ordinary expenses.
++        conn.execute("ALTER TABLE expenses ADD COLUMN refund_of INTEGER REFERENCES expenses(id)")
++    conn.execute("CREATE INDEX IF NOT EXISTS idx_expenses_refund_of ON expenses(refund_of)")
++
++
+ def init_schema(conn: sqlite3.Connection) -> None:
+     conn.executescript(SCHEMA)
++    _migrate(conn)
+     conn.commit()

@@ -1,0 +1,23 @@
+diff --git a/src/shared/Maid.luau b/src/shared/Maid.luau
+index 9672dcc..08260e0 100644
+--- a/src/shared/Maid.luau
++++ b/src/shared/Maid.luau
+@@ -1,5 +1,5 @@
+ --!strict
+--- Collects connections, instances and callbacks so they can be released together.
++-- Collects connections, instances, callbacks and threads so they can be released together.
+ local Maid = {}
+ Maid.__index = Maid
+ 
+@@ -25,6 +25,11 @@ function Maid:Clean()
+ 			item:Destroy()
+ 		elseif kind == "function" then
+ 			item()
++		elseif kind == "thread" then
++			-- A thread cannot cancel itself; skip it if Clean is running inside that thread.
++			if coroutine.running() ~= item and coroutine.status(item) ~= "dead" then
++				task.cancel(item)
++			end
+ 		elseif kind == "table" and type(item.Disconnect) == "function" then
+ 			item:Disconnect()
+ 		elseif kind == "table" and type(item.Destroy) == "function" then

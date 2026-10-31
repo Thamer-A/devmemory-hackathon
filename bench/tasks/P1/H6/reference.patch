@@ -1,0 +1,49 @@
+diff --git a/src/server/services/CurrencyService.luau b/src/server/services/CurrencyService.luau
+index 8307e0f..abeb376 100644
+--- a/src/server/services/CurrencyService.luau
++++ b/src/server/services/CurrencyService.luau
+@@ -41,6 +41,10 @@ function CurrencyService.add(player: Player, amount: number, reason: string): nu
+ 	local before = data.coins
+ 	local after = MathUtil.clamp(before + amount, 0, Config.MaxCoins)
+ 	data.coins = after
++	if after > before then
++		-- Spending never lowers lifetime earnings.
++		data.lifetimeCoins = (data.lifetimeCoins or 0) + (after - before)
++	end
+ 	DataService.markDirty(player)
+ 
+ 	LeaderboardService.set(player, "Coins", after)
+diff --git a/src/server/services/DataService.luau b/src/server/services/DataService.luau
+index 093db3b..be102c1 100644
+--- a/src/server/services/DataService.luau
++++ b/src/server/services/DataService.luau
+@@ -23,6 +23,7 @@ local dirty: { [Player]: boolean } = {}
+ local function defaultData(): PlayerData
+ 	return {
+ 		coins = Config.StartingCoins,
++		lifetimeCoins = 0,
+ 		inventory = {},
+ 		equipped = nil,
+ 		stats = {
+@@ -78,6 +79,9 @@ local function reconcile(data: any): PlayerData
+ 	if type(data.coins) ~= "number" then
+ 		data.coins = template.coins
+ 	end
++	if type(data.lifetimeCoins) ~= "number" then
++		data.lifetimeCoins = template.lifetimeCoins
++	end
+ 	if type(data.inventory) ~= "table" then
+ 		data.inventory = template.inventory
+ 	else
+diff --git a/src/shared/Types.luau b/src/shared/Types.luau
+index e4663ec..f99ba29 100644
+--- a/src/shared/Types.luau
++++ b/src/shared/Types.luau
+@@ -6,6 +6,7 @@ export type PlayerStats = {
+ 
+ export type PlayerData = {
+ 	coins: number,
++	lifetimeCoins: number,
+ 	inventory: { number },
+ 	equipped: number?,
+ 	stats: PlayerStats,

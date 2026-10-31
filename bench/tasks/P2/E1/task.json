@@ -1,0 +1,8 @@
+{
+ "id": "E1",
+ "project": "P2",
+ "type": "code",
+ "split": "heldout2",
+ "prompt": "Add a `top` command that lists the most expensive expenses, largest first. Show 5 by default, `--limit N` changes that (N must be at least 1), and `--month YYYY-MM` restricts it to one month like `list` does.",
+ "max_turns": 30
+}

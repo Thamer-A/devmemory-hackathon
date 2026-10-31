@@ -1,0 +1,65 @@
+diff --git a/src/server/services/EnemyService.luau b/src/server/services/EnemyService.luau
+index 9f19d02..c68d166 100644
+--- a/src/server/services/EnemyService.luau
++++ b/src/server/services/EnemyService.luau
+@@ -32,6 +32,8 @@ type EnemyRecord = {
+ }
+ 
+ local enemies: { [Model]: EnemyRecord } = {}
++-- Kills since the player's last death.
++local killStreaks: { [Player]: number } = {}
+ local enemyFolder: Folder? = nil
+ local spawnLoopActive = false
+ 
+@@ -130,6 +132,13 @@ local function creditKill(record: EnemyRecord)
+ 		return
+ 	end
+ 	CurrencyService.add(attacker, Config.KillReward, "enemy_kill")
++
++	local streak = (killStreaks[attacker] or 0) + 1
++	killStreaks[attacker] = streak
++	if streak % Config.KillStreakLength == 0 then
++		CurrencyService.add(attacker, Config.KillStreakBonus, "kill_streak")
++		Log.info("EnemyService", attacker.Name, "reached a kill streak of", streak)
++	end
+ 	local kills = DataService.incrementStat(attacker, "kills")
+ 	if kills then
+ 		LeaderboardService.set(attacker, "Kills", kills)
+@@ -289,7 +298,24 @@ function EnemyService.getEnemyCount(): number
+ 	return countEnemies()
+ end
+ 
++local function watchStreak(player: Player)
++	player.CharacterAdded:Connect(function(character)
++		local humanoid = character:WaitForChild("Humanoid") :: Humanoid
++		humanoid.Died:Connect(function()
++			killStreaks[player] = nil
++		end)
++	end)
++end
++
+ function EnemyService.init()
++	Players.PlayerAdded:Connect(watchStreak)
++	Players.PlayerRemoving:Connect(function(player)
++		killStreaks[player] = nil
++	end)
++	for _, player in Players:GetPlayers() do
++		watchStreak(player)
++	end
++
+ 	RoundService.stateChanged:Connect(function(state)
+ 		if state == "Playing" then
+ 			spawnLoop()
+diff --git a/src/shared/Config.luau b/src/shared/Config.luau
+index a4521cd..218f4d2 100644
+--- a/src/shared/Config.luau
++++ b/src/shared/Config.luau
+@@ -9,6 +9,8 @@ local Config = {
+ 	CoinPickupValue = 5,
+ 	RoundRewardCoins = 25,
+ 	KillReward = 10,
++	KillStreakLength = 5,
++	KillStreakBonus = 50,
+ 	PurchaseCooldown = 0.5,
+ 
+ 	-- Coins in the world

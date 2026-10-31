@@ -1,0 +1,23 @@
+diff --git a/src/shared/MathUtil.luau b/src/shared/MathUtil.luau
+index 0a850ed..7780b5e 100644
+--- a/src/shared/MathUtil.luau
++++ b/src/shared/MathUtil.luau
+@@ -22,6 +22,18 @@ function MathUtil.formatNumber(n: number): string
+ 	return formatted
+ end
+ 
++-- "M:SS", or "H:MM:SS" from one hour up. Fractions are dropped; negative input counts as 0.
++function MathUtil.formatDuration(seconds: number): string
++	local total = math.floor(math.max(0, seconds))
++	local hours = total // 3600
++	local minutes = (total % 3600) // 60
++	local secs = total % 60
++	if hours > 0 then
++		return string.format("%d:%02d:%02d", hours, minutes, secs)
++	end
++	return string.format("%d:%02d", minutes, secs)
++end
++
+ function MathUtil.randomPointInPart(part: BasePart): Vector3
+ 	local size = part.Size
+ 	local offset = Vector3.new(

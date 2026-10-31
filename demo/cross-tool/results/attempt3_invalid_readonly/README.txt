@@ -1,0 +1,1 @@
+Attempt 3 (not counted for editing): --ignore-user-config also dropped the Windows sandbox mode, so the workspace was read-only and no run could edit. Informative anyway: all 3 pack runs and 1 of 3 MCP runs named the exact original colors in their final message; 0 of 3 no-memory runs did.
