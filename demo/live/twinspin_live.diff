@@ -1,0 +1,31 @@
+diff --git a/src/server/Shop.lua b/src/server/Shop.lua
+index e8271a3..d5ca98d 100644
+--- a/src/server/Shop.lua
++++ b/src/server/Shop.lua
+@@ -32,6 +32,9 @@ local effects = {
+ 	Blade = function(player, amount)
+ 		bump(player, "BladeCount", amount, Config.Blades.StartCount)
+ 	end,
++	TwinSpin = function(player, amount)
++		bump(player, "BladeCount", amount, Config.Blades.StartCount)
++	end,
+ 	Damage = function(player, amount)
+ 		bump(player, "DamageBonus", amount, 0)
+ 	end,
+diff --git a/src/shared/Config.lua b/src/shared/Config.lua
+index 1a9b431..b19d83c 100644
+--- a/src/shared/Config.lua
++++ b/src/shared/Config.lua
+@@ -55,10 +55,11 @@ local Config = {
+ 	Shop = {
+ 		OfferCount = 3, -- random offers per player each break
+ 		RerollCost = 10, -- coins
+-		RarityWeight = { Common = 3, Rare = 1 }, -- relative odds of being offered
++		RarityWeight = { Common = 3, Rare = 1, Epic = 0.5 }, -- relative odds of being offered
+ 		-- Amount meaning depends on the upgrade; see effects in server/Shop.lua.
+ 		Upgrades = {
+ 			{ Id = "Blade", Name = "+1 Blade", Rarity = "Rare", Cost = 60, Amount = 1, Description = "Adds another orbiting blade." },
++			{ Id = "TwinSpin", Name = "Twin Spin", Rarity = "Epic", Cost = 120, Amount = 2, Description = "Adds 2 orbiting blades." },
+ 			{ Id = "Damage", Name = "Sharper Blades", Rarity = "Common", Cost = 30, Amount = 0.25, Description = "+25% blade damage." },
+ 			{ Id = "Spin", Name = "Faster Spin", Rarity = "Common", Cost = 30, Amount = 0.2, Description = "+20% spin speed." },
+ 			{ Id = "Reach", Name = "Longer Reach", Rarity = "Common", Cost = 35, Amount = 2, Description = "Blades orbit 2 studs further out." },

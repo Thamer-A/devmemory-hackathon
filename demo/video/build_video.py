@@ -205,6 +205,42 @@ def seg_action_bs(d, out):
     card(lines, d, out, panels=[(110, 165, 1700, 600, "0x5A606B")])
 
 
+# ---- live screen recordings (demo/live/record_live.py): the real tools running ----
+def live(clip, d, out, crop, caption, speed=1.0, start=0.0, bg="0x0C0C0C", cap_y="h-80"):
+    """Real recording: crop away window chrome, fit to 1920x1080, optional speed-up, freeze the last frame to fill d."""
+    v = (f"[0:v]{crop},scale=1920:-2,pad=1920:1080:0:(oh-ih)/2:color={bg},setpts=PTS/{speed},"
+         f"tpad=stop_mode=clone:stop_duration={d},trim=duration={d},setsar=1,"
+         f"{text(caption, 'w-text_w-40', cap_y, 30, color=TXT, start=0.3, box=True)}[v]")
+    run(["-ss", str(start), "-i", FOOT / clip, "-filter_complex", v, "-map", "[v]", "-t", str(d), *enc(out)])
+
+
+APP_CROP = "crop=1920:1080:0:40"  # drop the Chrome title bar
+
+
+def seg_input_live(d, out):
+    a, b, c = OUT / "_lin_a.mp4", OUT / "_lin_b.mp4", OUT / "_lin_c.mp4"
+    d1 = round(d * 0.32, 2); d2 = round(d * 0.30, 2); d3 = round(d - d1 - d2, 2)
+    live("live_app1.mp4", d1, a, APP_CROP, "The DevMemory app: Blade Swarm's memory, 8 sessions so far")
+    live("live_app2.mp4", d2, b, APP_CROP, "Session 8: the user picks the rarity colors")
+    card([("A few sessions later, a brand-new session gets:", 300, 46, MUT, FONT_R, 0.2),
+          ("\"Add an Epic upgrade called Twin Spin: +2 blades for 120 coins.", 430, 52, TXT, FONT, 0.8),
+          ("Make sure it shows up with the rarity colors we picked.\"", 500, 52, GRN, FONT, 1.6),
+          ("It has never seen session 8.", 660, 46, WARN, FONT, 3.5)], d3, c)
+    concat([a, b, c], out)
+
+
+def seg_action_live(d, out):
+    src = 21.2  # live_terminal.mp4 length
+    live("live_terminal.mp4", d, out, "crop=1920:1040:0:40",
+         "Real run: devmem scan + devmem pack on Blade Swarm  ·  0 AI tokens", speed=max(1.0, src / d), cap_y="30")
+
+
+def seg_output_live(d, out):
+    src = 33.0  # live_claude.mp4 length
+    live("live_claude.mp4", d, out, "crop=1920:920:0:40",
+         f"Real run: Claude Code with the DevMemory hook  ·  sped up {src / d:.0f}x", speed=src / d, cap_y="30")
+
+
 def seg_output_bs(d, out):
     a, b = OUT / "_bout_a.mp4", OUT / "_bout_b.mp4"
     d1 = round(d * 0.55, 2); d2 = round(d - d1, 2)
@@ -326,7 +362,7 @@ def main():
     if tf.exists():
         DUR.update(json.loads(tf.read_text(encoding="utf-8")))
     parts = []
-    for name, fn in [("hook", seg_hook), ("input", seg_input_bs), ("action", seg_action_bs), ("output", seg_output_bs),
+    for name, fn in [("hook", seg_hook), ("input", seg_input_live), ("action", seg_action_live), ("output", seg_output_live),
                      ("race", seg_race), ("heldout", lambda d, o: seg_slide(7, d, o)), ("also", seg_also),
                      ("close", seg_close)]:
         p = OUT / f"{len(parts):02d}_{name}.mp4"
