@@ -4,7 +4,7 @@ const { applyTheme } = require("C:/Users/thfal/.claude/skills/synced/76ba2e4a-45
 
 // ---------- everything that might change lives here ----------
 const DATA = {
-  round2: "Round 2 (fixed retrieval) is running — result to be added",
+  round2: "Round 2: all 8/8, no fixes. DevMemory cheapest: $0.74, 580k tok (vs 633k / 847k)",
   title: "DevMemory",
   subtitle: "Memory that lets every new AI coding session start warm",
   event: "HUMAIN–Misk Future AI Builders Hackathon · Challenge 2: Deliver AI with Less Compute",

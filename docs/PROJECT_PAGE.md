@@ -22,7 +22,7 @@ An Obsidian-style desktop app lets you browse the memory vault: sessions as note
 - **Held-out benchmark:** 12 unseen tasks on a Roblox game and a Python app, written by a separate agent and hash-frozen before tuning. DevMemory scored **86%**, the only setup above the 80% accuracy floor. Its cost per successful task was the lowest at **$0.0087**, against $0.0104 for a hand-written CLAUDE.md, $0.0099 for a bare session, and $0.092 for a bigger model (Sonnet) without memory.
 - **Building a game over many sessions** (automatic Roblox Studio playtest after every prompt): DevMemory used about **half the input tokens** of a no-memory agent or a self-maintained AGENTS.md (1.85M vs 3.08M and 3.41M). It was the cheapest and reached as many features as the best alternative.
 - **Honest failures:**
-  - In the first web-app race DevMemory lost, because its pack didn't carry the user's original spec. We fixed retrieval (origin lineage and verbatim requirement memory) and re-ran the race.
+  - In the first web-app race DevMemory lost, because its pack didn't carry the user's original spec. We fixed retrieval (origin lineage and verbatim requirement memory) and re-ran the race. In round 2 all three setups built all 8 features with no fixes, and DevMemory was the cheapest ($0.74, 580k input tokens vs 633k and 847k).
   - On the Python held-out project, a hand-written CLAUDE.md matched it.
 
 ## Built with

@@ -57,7 +57,15 @@ From `results/webrace_taskboard.jsonl`.
   - Headless mode blocked the agent's shell-based edits in its labels session. That is environment friction that hit all conditions.
   - **A real DevMemory gap:** the bug report never named the label colors, and DevMemory's pack did not carry forward the session where the user had specified them.
 - **Fix:** retrieval now always carries the session where a feature was first requested (origin lineage). It also keeps the user's concrete requirements verbatim (hex colors, numbers, API paths), and it no longer treats bug reports as decisions.
-- **Round 2:** all conditions re-run with the fixed retrieval, and with `node`/`curl` pre-approved for every condition. Result: *(see below, filled after the run)*.
+- **Round 2:** all conditions re-run with the fixed retrieval, and with `node`/`curl` pre-approved for every condition. **All three built all 8 features in 8 prompts with zero fix rounds.**
+
+  | Round 2 | Cost | Input tokens |
+  |---|---|---|
+  | none | $0.94 | 847k |
+  | AGENTS.md | $0.79 | 633k |
+  | **DevMemory** | **$0.74** | **580k** (−8% vs AGENTS.md, −32% vs none) |
+
+  Round 2 produced no bug reports, so it did not exercise the new lineage retrieval. That fix was verified offline instead: on round 1's exact failing case, the pack now carries the original labels request with its colors. The modest edge here reflects a short project where every feature worked the first time.
 
 ## Headline
 Across the fixed held-out benchmark, DevMemory was the only condition above the accuracy floor, with the lowest cost per successful task. In multi-session building it used roughly half the input tokens of the alternatives. It is not universally better:
