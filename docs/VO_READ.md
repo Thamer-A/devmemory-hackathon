@@ -1,53 +1,51 @@
-# Voice-over: read aloud (about 2:20)
+# Voice-over: read aloud (about 2:40)
 
-Pause about one second at each line marked (pause).
+Talk like you're explaining it to a friend. Take a short breath at each (pause); I'll cut the video on those pauses.
 
-**1. Problem**
+**1. Intro and problem**
 
-Every AI coding session starts from zero.
+Salam alaikum, my name is Thamer Alhussain, and this is my solution to Challenge 2: delivering AI with less compute. It's called DevMemory.
 
-It forgets what you decided, and what you asked for.
-
-*(pause)*
-
-**2. Input**
-
-This is Blade Swarm, a Roblox game we built entirely by prompting, one fresh AI session at a time. DevMemory recorded every session.
-
-In session eight, the user picked the rarity colors: common gray, rare blue, epic purple.
-
-The next session is brand new. It gets: add an epic upgrade called Twin Spin, and make sure it shows up with the rarity colors we picked.
+If you've ever coded with AI, you know the problem. Every new chat starts from scratch. It doesn't remember what you decided yesterday, so it either digs through your whole project again, or it just guesses.
 
 *(pause)*
 
-**3. AI in action**
+**2. The example**
 
-That new session has never seen session eight. DevMemory has.
+So we built a Roblox game, Blade Swarm, entirely by prompting, with every feature done in a brand-new AI session. DevMemory quietly recorded each one.
 
-Before it starts, DevMemory builds a pack of about a thousand tokens, with no AI calls at all: the session where the shop was designed, and the session where the colors were picked, word for word, plus where the code keeps them.
+In one session, we picked the colors for the shop's rarities: gray for common, blue for rare, purple for epic.
 
-*(pause)*
-
-**4. Output**
-
-The session goes straight to the shop config, and Twin Spin arrives as an epic upgrade, in the colors the user chose.
-
-We built this same game three ways, sixteen sessions each: with nothing, with a hand-kept AGENTS file, and with DevMemory.
-
-All three are playable. DevMemory used about half the input tokens, at the lowest cost.
+A few sessions later, a fresh session was asked to add an epic upgrade called Twin Spin, and to use "the rarity colors we picked". That session had never seen the conversation where we picked them.
 
 *(pause)*
 
-**5. Value and the wider testing**
+**3. What DevMemory does**
 
-We also tested it on 28 unseen benchmark tasks, frozen before any run. DevMemory was the only setup above our 80% accuracy bar, scoring 98% on the latest set, at the lowest cost per success.
+That's where DevMemory comes in. Before the AI even starts, it puts together a small briefing, about a thousand tokens, and it doesn't use any AI to build it.
 
-And we raced it on a web app, and shared its memory between Claude Code and Codex. The details are in our results.
+It pulls out the two conversations that matter, the shop design and the color choice, in our exact words, and points to the file where the colors live.
+
+*(pause)*
+
+**4. The result**
+
+So the AI goes straight to the right file, and Twin Spin comes in as an epic upgrade, in purple, just like we asked.
+
+Then we built the same game three times: once with no memory, once with a notes file the AI kept for itself, and once with DevMemory. All three ended up playable, but DevMemory got there with about half the tokens, and it was the cheapest.
+
+*(pause)*
+
+**5. Testing beyond one game**
+
+I didn't want to rely on one game, so I also tested it on 28 tasks it had never seen, locked in before a single test ran. DevMemory was the only setup that cleared our 80% accuracy bar on both test sets. On the latest one it scored 98%, at the lowest cost per correct answer.
+
+I also tried it on a web app, and even handed its memory from Claude Code over to Codex. All the details are in the repo.
 
 *(pause)*
 
 **6. Close**
 
-DevMemory runs locally, with Claude Code, Codex, or any MCP tool.
+DevMemory runs on your own machine, and it works with Claude Code, Codex, or any tool that supports MCP.
 
-Preserve everything. Send only what earns its tokens.
+The idea is simple: keep everything, but only send what's actually worth the tokens. Thanks for watching.

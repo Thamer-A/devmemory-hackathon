@@ -2,6 +2,8 @@
 
 **Structure:** the organisers' tip. One representative test case from our own Roblox game, Blade Swarm, then a brief mention of the wider testing.
 
+**Narration:** the spoken text is in `docs/VO_READ.md` (conversational version, opens with an introduction). The `>` lines below are the earlier draft, kept for the on-screen mapping.
+
 **Reading:** about 300 words. Read calmly, roughly 120–130 words per minute, with a one-second pause between sections (the edit cuts on those pauses). Each `>` line is one breath.
 
 **The test case:** race prompt R6 in the DevMemory build. The rarity colors were picked in an earlier session (session 8 in the app). Then a fresh session was asked to "make sure it shows up with the rarity colors we picked". All real, from the logged race.
