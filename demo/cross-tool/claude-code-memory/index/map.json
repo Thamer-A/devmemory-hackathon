@@ -1,0 +1,59 @@
+{
+ "project": "project",
+ "scanned_at": "2026-10-31T02:29:01+00:00",
+ "llm_tokens_used": 0,
+ "files": {
+  "README.md": {
+   "lang": "text",
+   "module": "README",
+   "symbols": [],
+   "deps": [],
+   "hash": "1820cf1177cc0aaa",
+   "lines": 4,
+   "bytes": 65
+  },
+  "server.js": {
+   "lang": "js",
+   "module": "server",
+   "symbols": [
+    "handleApi",
+    "handleCard",
+    "load",
+    "parseDue",
+    "readBody",
+    "save",
+    "send",
+    "serveStatic"
+   ],
+   "deps": [],
+   "hash": "02ff579084063cd9",
+   "lines": 196,
+   "bytes": 7231
+  },
+  "public/app.js": {
+   "lang": "js",
+   "module": "app",
+   "symbols": [
+    "api",
+    "initials",
+    "refresh",
+    "render",
+    "renderFilter",
+    "toast",
+    "todayStr"
+   ],
+   "deps": [],
+   "hash": "bfcc524a214b762a",
+   "lines": 191,
+   "bytes": 6380
+  }
+ },
+ "engine": "generic",
+ "rojo": {},
+ "conventions": {
+  "hub_apis": [],
+  "exclusive_sites": [],
+  "config_modules": {}
+ },
+ "used_by": {}
+}

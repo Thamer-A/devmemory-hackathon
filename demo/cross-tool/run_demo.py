@@ -1,0 +1,97 @@
+"""Cross-tool memory demo: sessions recorded from Claude Code, retrieved for Codex CLI.
+
+The task board in demo/taskboard/devmemory was built over 8 Claude Code sessions
+(captured in claude-code-memory/). We simulate a regression (someone restyled the label colors),
+then ask Codex to restore the colors the user originally asked for. Those exact colors exist only
+in a past Claude Code session. Three variants on identical copies:
+  without  - Codex alone (`devmem codex --no-pack`)
+  pack     - DevMemory's pack prepended to the prompt
+  mcp      - no pack; DevMemory offered as an MCP server for this run (Codex decides whether to call it)
+All runs are captured by DevMemory's tool-agnostic adapter (snapshot diff + `codex exec --json`).
+
+Isolation: attempt 1 put the copies in sibling folders inside this repo, and Codex (without memory)
+searched the parent folders and found the other copy. Now each variant runs alone in a fresh folder
+under ~/devmem-xtool/ (outside the repo), the memory store lives in a separate tree, and each run's
+folder is deleted before the next starts. Results and session records are copied into results/.
+
+  python demo/cross-tool/run_demo.py [without pack mcp] [--repeats N]
+"""
+import json
+import re
+import shutil
+import subprocess
+import sys
+import uuid
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent.parent
+APP = REPO / "demo" / "taskboard" / "devmemory"
+TASK = "Someone changed the label colors and now they look wrong. Put the label colors back to exactly what I originally asked for."
+MODEL = "gpt-5.6-luna"  # listed in the local Codex model cache for a ChatGPT login
+WANT = {"Bug": "#e5484d", "Feature": "#3e63dd", "Chore": "#8b8d98"}
+WORK = Path.home() / "devmem-xtool"
+MEM = Path.home() / "devmem-xtool-mem"
+OUT = HERE / "results"
+
+
+def setup():
+    proj = WORK / uuid.uuid4().hex[:8] / "project"
+    proj.mkdir(parents=True)
+    shutil.copy(APP / "server.js", proj)
+    shutil.copytree(APP / "public", proj / "public")
+    # the regression: a restyle replaced the specified hex colors everywhere
+    for f in (proj / "public" / "app.js", proj / "public" / "style.css"):
+        s = f.read_text(encoding="utf-8")
+        s = s.replace("#e5484d", "#ff6b6b").replace("#3e63dd", "#4dabf7").replace("#8b8d98", "#adb5bd")
+        f.write_text(s, encoding="utf-8")
+    store = MEM / uuid.uuid4().hex[:8]
+    shutil.copytree(HERE / "claude-code-memory", store)
+    return proj, store
+
+
+def check(proj):
+    js = (proj / "public" / "app.js").read_text(encoding="utf-8")
+    line = next((l for l in js.splitlines() if "Bug" in l and "Feature" in l and "#" in l), "")
+    found = {k: (re.search(k + r"['\"]?\s*:\s*['\"](#[0-9a-fA-F]{6})", line) or [None, None])[1] for k in WANT}
+    return {k: (v or "").lower() == WANT[k] for k, v in found.items()}, line.strip()
+
+
+def run(variant, rep):
+    proj, store = setup()
+    cmd = [sys.executable, "-m", "devmem.cli", "codex", TASK, "--project", str(proj), "--store", str(store), "--model", MODEL]
+    cmd += {"without": ["--no-pack"], "pack": [], "mcp": ["--mcp"]}[variant]
+    p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    ok, line = check(proj)
+    meta = sorted((store / "sessions").glob("*.meta.json"))[-1]
+    m = json.loads(meta.read_text(encoding="utf-8"))
+    raw = (store / "sessions" / m["raw_record"]).read_text(encoding="utf-8")
+    calls = [json.loads(l) for l in (store / "mcp_calls.jsonl").read_text(encoding="utf-8").splitlines()] \
+        if (store / "mcp_calls.jsonl").exists() else []
+    # did the agent look outside its project folder?
+    outside = sorted(set(re.findall(r"\.\.[\\/]|devmem-xtool|MiskXHumain|devmem-runs", raw)) - {"devmem-xtool"})
+    dest = OUT / f"{variant}_r{rep}"
+    shutil.rmtree(dest, ignore_errors=True)
+    dest.mkdir(parents=True)
+    shutil.copy(meta, dest / "session.meta.json")
+    shutil.copy(store / "sessions" / m["raw_record"], dest / "session.jsonl")
+    if calls:
+        shutil.copy(store / "mcp_calls.jsonl", dest / "mcp_calls.jsonl")
+    shutil.rmtree(proj.parent, ignore_errors=True)
+    shutil.rmtree(store, ignore_errors=True)
+    return {"variant": variant, "repeat": rep, "colors_correct": ok, "all_correct": all(ok.values()), "line": line,
+            "usage": m.get("usage"), "files_edited": m.get("files_edited"), "mcp_calls": [c["tool"] for c in calls],
+            "looked_outside_project": outside, "errors": m.get("errors"),
+            "final_message": (m.get("result_text") or "")[:300], "exit": p.returncode}
+
+
+if __name__ == "__main__":
+    variants = [a for a in sys.argv[1:] if a in ("without", "pack", "mcp")] or ["without", "pack", "mcp"]
+    reps = int(sys.argv[sys.argv.index("--repeats") + 1]) if "--repeats" in sys.argv else 1
+    OUT.mkdir(exist_ok=True)
+    for rep in range(reps):
+        for v in variants:
+            r = run(v, rep)
+            with open(OUT / "results.jsonl", "a", encoding="utf-8") as f:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            print(json.dumps(r, ensure_ascii=False), flush=True)

@@ -786,6 +786,21 @@ function jsonlTimeline(text, prompt) {
       const u = e.usage || {};
       ev("done", "✓", `<span class="tool">Result</span><span class="tag ${e.is_error ? "stale" : "fresh"}">${esc(e.subtype || "")}</span>${L}`,
         `<div class="cards sm"><div class="card"><div class="lbl">Cost</div><div class="val g">$${(e.total_cost_usd || 0).toFixed(4)}</div></div><div class="card"><div class="lbl">Output</div><div class="val v">${fmt(u.output_tokens)}</div></div><div class="card"><div class="lbl">Input</div><div class="val">${fmt(u.input_tokens)}</div></div><div class="card"><div class="lbl">Cache read</div><div class="val c">${fmt(u.cache_read_input_tokens)}</div></div><div class="card"><div class="lbl">Turns</div><div class="val">${fmt(e.num_turns)}</div><div class="note">${((e.duration_ms || 0) / 1000).toFixed(1)}s</div></div></div>${e.result ? `<div class="atext mdbody" style="margin-top:8px">${renderMd(e.result)}</div>` : ""}`);
+    }
+    // tool-agnostic records (devmem/generic.py): any AI tool, captured by snapshot diff
+    else if (e.type === "prompt") ev("user", "U", `<span class="tool">User prompt</span>${L}`, `<div class="quote">${esc(e.text || "")}</div>`);
+    else if (e.type === "command") ev("Bash", "$", `<span class="tool">Launched</span>${L}`, `<div class="cmd">${esc((e.argv || []).join(" "))}</div>`);
+    else if (e.type === "output") ev("res", "↵", `<span class="tool">Tool output</span><span class="dim">stdout/stderr</span>${L}`, resultBlock(e.text || ""));
+    else if (e.type === "final_message") ev("assistant", "●", `<span class="tool">Final message</span><span class="dim">${esc(e.source || "")}</span>${L}`, `<div class="atext mdbody">${renderMd(e.text || "")}</div>`);
+    else if (e.type === "file_changes") ev("Edit", "✎", `<span class="tool">Observed file changes</span><span class="muted">${(e.files || []).length} files</span><span class="dim">snapshot diff</span>${L}`, e.unified_diff ? resultBlock(e.unified_diff) : '<div class="dim">no changes</div>');
+    else if (e.type === "tool_event" && e.event) {
+      const x = e.event, it = x.item || {};
+      if (it.type === "agent_message" && it.text) ev("assistant", "●", `<span class="tool">Assistant</span><span class="dim">visible text</span>${L}`, `<div class="atext mdbody">${renderMd(it.text)}</div>`);
+      else if (it.type === "command_execution" && x.type === "item.completed") ev("Bash", "$", `<span class="tool">Command</span>${it.exit_code ? '<span class="tag stale">exit ' + esc(String(it.exit_code)) + "</span>" : ""}${L}`, `<div class="cmd">${esc(it.command || "")}</div>${it.aggregated_output ? resultBlock(it.aggregated_output) : ""}`);
+      else if (it.type === "file_change" && x.type === "item.completed") ev("Edit", "✎", `<span class="tool">File change</span>${L}`, `<div class="kin">${esc((it.changes || []).map((c) => (c.kind || "") + " " + (c.path || "")).join(", "))}</div>`);
+      else if (it.type === "error" || x.type === "error" || x.type === "turn.failed") ev("warn", "!", `<span class="tool">Error</span>${L}`, `<div class="cmd">${esc(it.message || x.message || (x.error && x.error.message) || "")}</div>`);
+      else if (x.type === "turn.completed" && x.usage) ev("done", "✓", `<span class="tool">Turn completed</span>${L}`, `<div class="cards sm"><div class="card"><div class="lbl">Input</div><div class="val">${fmt(x.usage.input_tokens)}</div></div><div class="card"><div class="lbl">Cached input</div><div class="val c">${fmt(x.usage.cached_input_tokens)}</div></div><div class="card"><div class="lbl">Output</div><div class="val v">${fmt(x.usage.output_tokens)}</div></div></div>`);
+      else hidden++;
     } else hidden++;
   });
   return `<div class="timeline evs">${h || '<span class="muted">No events.</span>'}</div><p class="dim" style="margin-top:14px">${n} events shown${hidden ? `, ${hidden} housekeeping records hidden (rate limits, thinking-token counters, empty thinking blocks)` : ""}. Reasoning content is shown only when the provider exposed it.</p>`;

@@ -154,7 +154,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--suite", required=True, help="name for this batch, e.g. dev1")
     ap.add_argument("--tasks", help="comma list of PROJECT:ID")
-    ap.add_argument("--split", choices=["dev", "heldout"])
+    ap.add_argument("--split", choices=["dev", "heldout", "heldout2"])
     ap.add_argument("--types", help="comma list of task types (code,history,stale,unrelated)")
     ap.add_argument("--conditions", default="C0", help="comma list or 'all'")
     ap.add_argument("--models", default="haiku")
@@ -164,7 +164,7 @@ def main(argv=None):
     ap.add_argument("--keep", action="store_true", help="keep work dirs for inspection")
     ap.add_argument("--dry", action="store_true")
     a = ap.parse_args(argv)
-    if a.split == "heldout" and not a.dry:
+    if a.split in ("heldout", "heldout2") and not a.dry:
         print("Held-out split requested: this is the one-time final run.", file=sys.stderr)
     tasks = load_tasks(a.tasks, a.split, a.types)
     conds = list(CONDITIONS) if a.conditions == "all" else a.conditions.split(",")

@@ -1,6 +1,7 @@
 """Check that the held-out tasks are byte-identical to the frozen set (bench/HELDOUT_FREEZE.txt).
 
-  python -m bench.verify_freeze
+  python -m bench.verify_freeze                          (first held-out set)
+  python -m bench.verify_freeze HELDOUT2_FREEZE.txt      (second held-out set)
 """
 from __future__ import annotations
 
@@ -12,7 +13,8 @@ REPO = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
-    lines = (REPO / "bench" / "HELDOUT_FREEZE.txt").read_text(encoding="utf-8").splitlines()
+    name = sys.argv[1] if len(sys.argv) > 1 else "HELDOUT_FREEZE.txt"
+    lines = (REPO / "bench" / name).read_text(encoding="utf-8").splitlines()
     entries = [l for l in lines if l.strip() and not l.startswith("TOTAL")]
     total = next(l.split()[1] for l in lines if l.startswith("TOTAL"))
     bad = 0

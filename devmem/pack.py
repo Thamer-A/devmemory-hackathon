@@ -299,8 +299,11 @@ def build_pack(project: Path, store: Path, task: str, budget: int = 1500, mode: 
             result = re.sub(r"\s+", " ", s.get("result_text") or "")[:500]
             block = [f"- [session {str(s.get('session_id'))[:8]}, {s.get('started_at', '')[:10]}, "
                      f"src: sessions/{s.get('raw_record')}]{flag}",
-                     f"  - User asked: \"{prompt}\"",
-                     f"  - Outcome (assistant-visible summary): {result}"]
+                     f"  - User asked: \"{prompt}\""]
+            if result or not s.get("result_source"):  # Claude Code captures: unchanged format
+                block.append(f"  - Outcome ({s.get('result_source') or 'assistant-visible summary'}): {result}")
+            elif s.get("tool_calls"):  # tool-agnostic capture without a summary: the observed diff speaks
+                block.append(f"  - Changes observed: {len(s['tool_calls'])} hunks")
             if s.get("files_edited"):
                 block.append(f"  - Edited then: {', '.join(s['files_edited'])}")
             if not fits(block):

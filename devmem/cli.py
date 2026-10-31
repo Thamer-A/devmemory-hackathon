@@ -6,6 +6,10 @@
   devmem pack    "<task>" [--budget N] [--mode full|static|nofresh] [--out FILE]
   devmem status  [--project P]                        sessions + freshness overview
   devmem hook                                         UserPromptSubmit hook: stdin JSON -> pack on stdout
+  devmem mcp     [--project P]                        MCP server (stdio) for any MCP client
+  devmem codex   "<task>" [--model M]                 run Codex CLI with the pack, capture the session
+  devmem wrap    --prompt "<task>" -- CMD ...          run any CLI agent ({prompt}/{pack_file} in CMD), capture
+  devmem begin / devmem end --prompt "<task>"         bracket a session in an IDE tool, capture the diff
 """
 from __future__ import annotations
 
@@ -28,7 +32,7 @@ def _store(a) -> Path:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="devmem")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("scan", "run", "import", "pack", "status", "hook", "ui", "app"):
+    for name in ("scan", "run", "import", "pack", "status", "hook", "ui", "app", "mcp", "codex", "wrap", "begin", "end"):
         p = sub.add_parser(name)
         p.add_argument("--project", default=None if name == "app" else ".")
         if name == "app":
@@ -42,6 +46,20 @@ def main(argv=None) -> int:
             p.add_argument("prompt")
             p.add_argument("--model", default="sonnet")
             p.add_argument("--max-turns", type=int, default=40)
+        if name == "codex":
+            p.add_argument("prompt")
+            p.add_argument("--model")
+            p.add_argument("--no-pack", action="store_true", help="capture only, no context pack")
+            p.add_argument("--mcp", action="store_true", help="give Codex DevMemory as an MCP server instead of a pack")
+        if name == "wrap":
+            p.add_argument("--prompt", required=True)
+            p.add_argument("--provider", default="cli")
+            p.add_argument("--no-pack", action="store_true")
+            p.add_argument("command", nargs=argparse.REMAINDER)
+        if name == "end":
+            p.add_argument("--prompt", required=True)
+            p.add_argument("--provider", default="manual")
+            p.add_argument("--summary")
         if name == "import":
             p.add_argument("stream")
             p.add_argument("--prompt", required=True)
@@ -57,6 +75,26 @@ def main(argv=None) -> int:
         return run_app(proj, Path(a.store) if a.store else None, dry_run=a.dry_run, port=a.port)
     project = Path(a.project).resolve()
 
+    if a.cmd == "mcp":
+        from .mcp_server import serve as serve_mcp
+        return serve_mcp(project, _store(a))
+    if a.cmd in ("codex", "wrap", "begin", "end"):
+        from . import generic
+        if a.cmd == "codex":
+            meta = generic.codex(project, a.prompt, model=a.model, store=_store(a),
+                                 with_pack=not (a.no_pack or a.mcp), mcp=a.mcp)
+        elif a.cmd == "wrap":
+            cmd = a.command[1:] if a.command[:1] == ["--"] else a.command
+            meta = generic.wrap(project, a.prompt, cmd, provider=a.provider, store=_store(a), with_pack=not a.no_pack)
+        elif a.cmd == "begin":
+            generic.begin(project, _store(a))
+            print("recording; run `devmem end --prompt ...` when the session is done")
+            return 0
+        else:
+            meta = generic.end(project, a.prompt, provider=a.provider, store=_store(a), summary=a.summary,
+                               summary_source="user-provided summary" if a.summary else None)
+        print(f"captured -> {meta}")
+        return 0
     if a.cmd == "ui":
         from .ui_server import serve
         serve(project, _store(a), port=a.port, open_browser=not a.no_browser)
