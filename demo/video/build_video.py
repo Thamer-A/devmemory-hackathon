@@ -18,7 +18,7 @@ FONT_R = "C\\:/Windows/Fonts/calibri.ttf"
 BG, VIO, CY, GRN, WARN, TXT, MUT = "0x0F1115", "0x8B7CF6", "0x38D6E8", "0x3DD68C", "0xF5A524", "0xEDEDED", "0x9AA0AA"
 GAME_CROP = "crop=1910:768:5:218"  # Studio game view inside the maximized 1920x1094 window
 CLIPS = {"none": "none_2.mp4", "agentsmd": "agentsmd_2.mp4", "devmemory": "devmemory_1.mp4"}
-DUR = {"hook": 14, "input": 26, "action": 38, "output": 28, "heldout": 22, "race": 22, "close": 12}
+DUR = {"hook": 13, "input": 27, "action": 32, "output": 30, "race": 22, "heldout": 16, "also": 9, "close": 12}
 MONO = "C\\:/Windows/Fonts/consola.ttf"
 SHOTS = REPO / "docs" / "app-screens"
 
@@ -80,11 +80,89 @@ def shot(img, crop, d, out, caps, box=None):
     run(["-i", SHOTS / img, "-filter_complex", ",".join(f) + "[v]", "-map", "[v]", "-t", str(d), *enc(out)])
 
 
-def card(lines, d, out):
-    """Text card on the dark background. lines: (text, y, size, color, font, start)."""
-    draws = [text(t, "(w-text_w)/2", y, sz, color=c, font=fn, start=st) for t, y, sz, c, fn, st in lines]
+def card(lines, d, out, panels=()):
+    """Text card on the dark background. lines: (text, y, size, color, font, start[, x]); x defaults to centred.
+    panels: (x, y, w, h, border_color) rounded-looking boxes drawn first."""
+    draws = [f"drawbox=x={x}:y={y}:w={w}:h={h}:color=0x161A22:t=fill,drawbox=x={x}:y={y}:w={w}:h={h}:color={c}:t=3"
+             for x, y, w, h, c in panels]
+    for ln in lines:
+        t, y, sz, c, fn, st = ln[:6]
+        x = ln[6] if len(ln) > 6 else "(w-text_w)/2"
+        draws.append(text(t, x, y, sz, color=c, font=fn, start=st))
     run(["-f", "lavfi", "-i", f"color=c={BG}:s=1920x1080:d={d}:r=30", "-filter_complex", "[0:v]" + ",".join(draws) + "[v]",
          "-map", "[v]", *enc(out)])
+
+
+def seg_input_roblox(d, out):
+    """Held-out task P1 H2: the plan exists only in an earlier session."""
+    a, b = OUT / "_rin_a.mp4", OUT / "_rin_b.mp4"
+    d1 = round(d * 0.62, 2); d2 = round(d - d1, 2)
+    card([("Earlier session  ·  our Roblox benchmark game (CoinRush)  ·  planning only, no code", 170, 44, MUT, FONT_R, 0.2),
+          ("\"Let's plan the daily login reward. Decisions we agreed on:", 290, 40, TXT, FONT_R, 0.8, 240),
+          ("coins are granted only through CurrencyService.add  (reason \"daily_reward\")", 370, 38, TXT, FONT_R, 1.6, 300),
+          ("the day boundary is 00:00 UTC", 430, 38, TXT, FONT_R, 2.2, 300),
+          ("reward is 20 coins plus 10 per streak day", 490, 38, GRN, FONT, 2.8, 300),
+          ("the streak caps at 7 days, as a new Config.DailyStreakCap = 7\"", 550, 38, GRN, FONT, 3.4, 300),
+          ("Nothing is written to the code yet. The plan lives only in that conversation.", 720, 38, CY, FONT, 6.0)],
+         d1, a, panels=[(200, 250, 1520, 380, "0x5A606B")])
+    card([("Days later, a brand-new session gets one line:", 330, 46, MUT, FONT_R, 0.2),
+          ("\"Add the daily reward payout calculation from the plan we made", 450, 52, TXT, FONT, 0.8),
+          ("as a shared module, DailyReward.coinsFor(streak).\"", 520, 52, TXT, FONT, 0.8),
+          ("It has never seen the plan.", 680, 46, WARN, FONT, 3.0)], d2, b)
+    concat([a, b], out)
+
+
+def seg_action_roblox(d, out):
+    """The actual pack delivered for that run (results/raw/heldout/heldout_P1-H2_C3_haiku_r0_*.pack.md), excerpt."""
+    X = 150
+    lines = [("DevMemory builds a pack for this request  ·  0 AI tokens  ·  actual pack, excerpt", 90, 40, TXT, FONT, 0.2),
+             ("# DevMemory context pack     Project: game (roblox, rojo)", 200, 28, CY, MONO, 0.8, X),
+             ("## Conventions (observed in code)", 260, 28, VIO, MONO, 1.6, X),
+             ("- `data.coins writes` occur only in CurrencyService / DataService", 305, 26, TXT, MONO, 2.0, X),
+             ("- `CurrencyService.add(...)` is the shared entry point, called from 5 files", 345, 26, TXT, MONO, 2.4, X),
+             ("## Relevant past sessions", 415, 28, VIO, MONO, 4.0, X),
+             ("- [session 17c7cb15, 2026-10-30]", 460, 26, MUT, MONO, 4.4, X),
+             ("  User asked: \"Let's plan the daily login reward ... Decisions we agreed on:", 500, 26, TXT, MONO, 5.0, X),
+             ("  (1) coins are granted only through CurrencyService.add ... \"daily_reward\";", 540, 26, TXT, MONO, 5.6, X),
+             ("  (2) the day boundary is 00:00 UTC, not server local time;", 580, 26, TXT, MONO, 6.2, X),
+             ("  (3) reward is 20 coins plus 10 per streak day;", 620, 26, GRN, MONO, 6.8, X),
+             ("  (4) the streak caps at 7 days, as a new Config.DailyStreakCap = 7; ...\"", 660, 26, GRN, MONO, 7.4, X),
+             ("## Relevant files", 730, 28, VIO, MONO, 9.0, X),
+             ("- src/shared/Config.luau [61 lines, used by 7]   L10: RoundRewardCoins = 25", 775, 26, TXT, MONO, 9.4, X),
+             ("The plan, word for word, plus the rules this game already follows.", 900, 44, CY, FONT, 12.0)]
+    card(lines, d, out, panels=[(110, 170, 1700, 660, "0x5A606B")])
+
+
+def seg_code(d, out):
+    """Side-by-side output (results/raw/heldout/heldout_P1-H2_C0_haiku_r0_*.diff vs ..._C3_haiku_r0_*.diff)."""
+    L, R = 120, 1000
+    lines = [("Same request. Same model.", 70, 52, TXT, FONT, 0.2),
+             ("Claude, no memory", 180, 42, TXT, FONT, 0.6, L), ("Claude + DevMemory", 180, 42, VIO, FONT, 0.6, R),
+             ("DailyRewardBaseCoins = 50,", 290, 30, WARN, MONO, 1.2, L + 30),
+             ("DailyRewardPerDayCoins = 10,", 335, 30, TXT, MONO, 1.2, L + 30),
+             ("DailyRewardMaxStreak = 7,", 380, 30, TXT, MONO, 1.2, L + 30),
+             ("return BaseCoins + PerDayCoins", 450, 28, MUT, MONO, 1.6, L + 30),
+             ("       * (cappedDay - 1)", 490, 28, MUT, MONO, 1.6, L + 30),
+             ("DailyRewardBase = 20,", 290, 30, GRN, MONO, 2.4, R + 30),
+             ("DailyRewardPerStreakDay = 10,", 335, 30, GRN, MONO, 2.4, R + 30),
+             ("DailyStreakCap = 7,", 380, 30, GRN, MONO, 2.4, R + 30),
+             ("return Base + PerStreakDay * day", 450, 28, MUT, MONO, 2.8, R + 30),
+             ("  (day clamped to DailyStreakCap)", 490, 28, MUT, MONO, 2.8, R + 30),
+             ("50 coins: invented", 580, 36, WARN, FONT, 4.0, L + 30),
+             ("20 + 10 per day, cap 7: the plan", 580, 36, GRN, FONT, 4.5, R + 30),
+             ("0 of 3 correct", 700, 64, WARN, FONT, 7.0, L + 30),
+             ("3 of 3 correct", 700, 64, GRN, FONT, 7.5, R + 30),
+             ("A bigger model and a hand-written CLAUDE.md also failed every time", 790, 30, MUT, FONT_R, 9.0, L + 30),
+             ("Same token cost on average (62k vs 63k)", 790, 30, MUT, FONT_R, 9.5, R + 30),
+             ("Held-out Roblox task H2, frozen before any run. Model: Claude Haiku 5.5.", 960, 28, MUT, FONT_R, 11.0)]
+    card(lines, d, out, panels=[(L, 250, 800, 290, "0x5A606B"), (R, 250, 800, 290, VIO)])
+
+
+def seg_also(d, out):
+    card([("Also tested", 300, 60, TXT, FONT, 0.2),
+          ("A web-app race: all 8 features built, DevMemory the cheapest", 450, 44, CY, FONT, 0.8),
+          ("Memory shared between Claude Code and Codex: 3 of 3 right vs 0 of 3", 530, 44, CY, FONT, 1.6),
+          ("Every number, method and disclosure: RESULTS.md in the repository", 700, 34, MUT, FONT_R, 2.6)], d, out)
 
 
 def seg_input(d, out):
@@ -136,7 +214,7 @@ def seg_race(d, out):
         x = 30 + i * 630
         fc.append(f"[{cur}][p{i}]overlay={x}:250[o{i}]")
         cur = f"o{i}"
-    draws = [text("We also built a full Roblox game three ways: 16 fresh sessions each", "(w-text_w)/2", 70, 48)]
+    draws = [text("Then: the same Roblox game built three ways, 16 fresh sessions each", "(w-text_w)/2", 70, 48)]
     for i, (k, title, tok, cost, col) in enumerate(names):
         cx = 30 + i * 630 + 300
         draws.append(text(title, f"{cx}-text_w/2", 185, 42, color=col if k == "devmemory" else TXT))
@@ -186,8 +264,9 @@ def main():
     if tf.exists():
         DUR.update(json.loads(tf.read_text(encoding="utf-8")))
     parts = []
-    for name, fn in [("hook", seg_hook), ("input", seg_input), ("action", seg_action), ("output", seg_xtool),
-                     ("heldout", lambda d, o: seg_slide(7, d, o)), ("race", seg_race), ("close", seg_close)]:
+    for name, fn in [("hook", seg_hook), ("input", seg_input_roblox), ("action", seg_action_roblox), ("output", seg_code),
+                     ("race", seg_race), ("heldout", lambda d, o: seg_slide(7, d, o)), ("also", seg_also),
+                     ("close", seg_close)]:
         p = OUT / f"{len(parts):02d}_{name}.mp4"
         fn(DUR[name], p)
         parts.append(p)
