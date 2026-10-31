@@ -1,0 +1,34 @@
+{
+ "about": "Adaptive multi-session race building a team task board web app. After every fresh session the app is started and tested automatically (HTTP API + headless Chrome DOM/screenshot); the next prompt is a bug report from failed checks (same fixed rule as the Roblox race) or the next roadmap feature. Fully automated: no human or Studio in the loop.",
+ "model": "sonnet",
+ "max_turns": 60,
+ "timeout_s": 1500,
+ "max_prompts": 12,
+ "agents_md": "# Team Task Board\n\nWeb app: Node.js (no npm dependencies), `node server.js`, static frontend in `public/`.\n\nKeep this file up to date: after every change, record the design decisions (API shapes, field names, colors, rules) and where things live, so the next session can continue without re-reading everything.\n",
+ "roadmap": [
+  {"id": "W1", "requires": ["server_starts", "columns_render", "cards_api", "card_renders", "persistence"], "prompt": "Let's build a team task board web app in this folder. Use Node.js with NO npm dependencies (only built-in modules): `node server.js` starts it on the port in the PORT environment variable (default 3000), serves the frontend from `public/`, and stores data in `data/board.json`. Today: a board with three columns - To Do, In Progress, Done - and a form to add a card with a title. API: GET /api/cards returns an array of cards, POST /api/cards with JSON {title, column} creates one and returns it with an id. New cards default to To Do."},
+  {"id": "W2", "requires": ["move_api", "delete_api"], "prompt": "Next: let me move cards between columns by drag and drop, and delete cards. API: PATCH /api/cards/:id with JSON {column} moves a card, DELETE /api/cards/:id removes it."},
+  {"id": "W3", "requires": ["labels"], "prompt": "Add labels. A card can have one label: Bug (red #e5484d), Feature (blue #3e63dd) or Chore (gray #8b8d98), stored in the card's `label` field. Show the label as a colored pill on the card, and add a filter bar to show only cards with one label."},
+  {"id": "W4", "requires": ["due_dates"], "prompt": "Add due dates in a `dueDate` field (YYYY-MM-DD). Overdue cards get a red border and cards due today get an amber border."},
+  {"id": "W5", "requires": ["dark_theme"], "prompt": "Make it look good: dark theme with background #0f1115, columns as rounded panels, violet accent #8b7cf6, and a card-count badge on each column header. It should work on a laptop screen and a phone."},
+  {"id": "W6", "requires": ["assignees"], "prompt": "Add assignees. Team members are Alice, Bob, Carol and Dan; a card has an `assignee` field. Show an avatar circle with the person's initials on the card, and add an assignee filter alongside the label filter we added."},
+  {"id": "W7", "requires": ["wip_limit"], "prompt": "Feedback from the team: In Progress should hold at most 3 cards. The API must reject a move or create that would exceed it with HTTP 409, and the UI should show a toast message. Keep the label colors we picked."},
+  {"id": "W8", "requires": ["search"], "prompt": "Add a search box that filters cards by title, and a \"Clear filters\" button that resets the search and also the label and assignee filters."}
+ ],
+ "always_required": ["server_starts"],
+ "bug_text": {
+  "server_starts": "The app doesn't start (node server.js) or the page doesn't load",
+  "columns_render": "I don't see the three columns (To Do, In Progress, Done) on the page.",
+  "cards_api": "Creating a card with POST /api/cards doesn't work (or GET /api/cards doesn't return it).",
+  "card_renders": "Cards I create don't show up on the board.",
+  "persistence": "Cards disappear after restarting the server.",
+  "move_api": "Moving a card with PATCH /api/cards/:id {column} doesn't work.",
+  "delete_api": "Deleting a card with DELETE /api/cards/:id doesn't work.",
+  "labels": "Labels don't work: the label isn't saved on the card or the label pill / colors don't show.",
+  "due_dates": "Due dates don't work: dueDate isn't saved or overdue cards aren't highlighted.",
+  "dark_theme": "The dark theme isn't there (background #0f1115 with the violet #8b7cf6 accent).",
+  "assignees": "Assignees don't work: the assignee isn't saved or the initials avatar doesn't show.",
+  "wip_limit": "The In Progress limit isn't enforced: a 4th card in In Progress is accepted instead of getting HTTP 409.",
+  "search": "There's no working search box and Clear filters button."
+ }
+}

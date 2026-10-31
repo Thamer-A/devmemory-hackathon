@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Task Board</title>
+<style>
+body { background: #0f1115; color: #eee; font-family: sans-serif; }
+.col { background: #161a22; border-radius: 10px; padding: 8px; display: inline-block; vertical-align: top; width: 30%; }
+.badge { background: #8b7cf6; border-radius: 8px; padding: 0 6px; }
+.pill.Bug { background: #e5484d; } .pill.Feature { background: #3e63dd; } .pill.Chore { background: #8b8d98; }
+.overdue { border: 2px solid #e5484d; } .today { border: 2px solid #f5a524; }
+.avatar { border-radius: 50%; background: #8b7cf6; padding: 2px 5px; }
+</style></head>
+<body>
+<input type="search" id="q" placeholder="Search cards"> <button id="clear">Clear filters</button>
+<div id="board"></div>
+<script>
+const COLS = ["To Do", "In Progress", "Done"];
+async function render() {
+  const cards = await (await fetch("/api/cards")).json();
+  const q = document.getElementById("q").value.toLowerCase();
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById("board").innerHTML = COLS.map((c) => {
+    const list = cards.filter((x) => x.column === c && x.title.toLowerCase().includes(q));
+    return `<div class="col"><h3>${c} <span class="badge">${list.length}</span></h3>` + list.map((x) => {
+      const due = x.dueDate ? (x.dueDate < today ? "overdue" : x.dueDate === today ? "today" : "") : "";
+      const initials = x.assignee ? x.assignee.slice(0, 2).toUpperCase() : "";
+      return `<div class="card ${due}">${x.title} ${x.label ? `<span class="pill ${x.label}">${x.label}</span>` : ""} ${initials ? `<span class="avatar">${initials}</span>` : ""} <small>${x.dueDate || ""}</small></div>`;
+    }).join("") + "</div>";
+  }).join("");
+}
+document.getElementById("q").oninput = render;
+document.getElementById("clear").onclick = () => { document.getElementById("q").value = ""; render(); };
+render();
+</script>
+</body></html>
