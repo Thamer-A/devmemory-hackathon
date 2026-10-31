@@ -1,0 +1,532 @@
+{
+ "project": "project",
+ "scanned_at": "2026-10-31T00:16:57+00:00",
+ "llm_tokens_used": 0,
+ "files": {
+  "README.md": {
+   "lang": "text",
+   "module": "README",
+   "symbols": [],
+   "deps": [],
+   "hash": "ff4ffcb13e21b5f8",
+   "lines": 4,
+   "bytes": 70
+  },
+  "default.project.json": {
+   "lang": "text",
+   "module": "default",
+   "symbols": [],
+   "deps": [],
+   "hash": "e6be8c2f818ddb73",
+   "lines": 76,
+   "bytes": 2161
+  },
+  "src/client/BladeOrbit.client.lua": {
+   "lang": "luau",
+   "module": "BladeOrbit",
+   "symbols": [],
+   "deps": [
+    "BladeMath",
+    "Config"
+   ],
+   "kind": "client-script",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "SpinSpeed"
+   ],
+   "hash": "ca884b946cb2fc3d",
+   "lines": 36,
+   "bytes": 1340
+  },
+  "src/client/CombatFx.client.lua": {
+   "lang": "luau",
+   "module": "CombatFx",
+   "symbols": [],
+   "deps": [
+    "Config",
+    "Remotes"
+   ],
+   "kind": "client-script",
+   "local_functions": [
+    "burst",
+    "popup"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "Blades",
+    "Effects",
+    "Ui",
+    "Zombies"
+   ],
+   "hash": "b220c95a3eb45cef",
+   "lines": 92,
+   "bytes": 3127
+  },
+  "src/client/Hud.client.lua": {
+   "lang": "luau",
+   "module": "Hud",
+   "symbols": [],
+   "deps": [
+    "Config",
+    "UiKit"
+   ],
+   "kind": "client-script",
+   "local_functions": [
+    "formatTime",
+    "refreshCoins",
+    "refreshHealth",
+    "refreshTimer",
+    "refreshWave",
+    "statCell"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "92f3d8914279b51b",
+   "lines": 141,
+   "bytes": 4942
+  },
+  "src/client/ShopUi.client.lua": {
+   "lang": "luau",
+   "module": "ShopUi",
+   "symbols": [],
+   "deps": [
+    "Config",
+    "Remotes",
+    "UiKit"
+   ],
+   "kind": "client-script",
+   "local_functions": [
+    "addLabel",
+    "coins",
+    "render"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "285d3fdf475d3dfc",
+   "lines": 137,
+   "bytes": 4442
+  },
+  "src/client/UiKit.lua": {
+   "lang": "luau",
+   "module": "UiKit",
+   "symbols": [
+    "UiKit.corner",
+    "UiKit.label",
+    "UiKit.panel",
+    "UiKit.stroke"
+   ],
+   "deps": [
+    "Config"
+   ],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "1d186471ad419a2d",
+   "lines": 45,
+   "bytes": 1256
+  },
+  "src/server/Blades.server.lua": {
+   "lang": "luau",
+   "module": "Blades",
+   "symbols": [],
+   "deps": [
+    "Config"
+   ],
+   "kind": "server-script",
+   "local_functions": [
+    "makeBlade",
+    "setBladeCount",
+    "setup"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "Color",
+    "LightBrightness",
+    "LightRange",
+    "Material",
+    "Size",
+    "StartCount",
+    "TrailLifetime",
+    "TrailWidth"
+   ],
+   "hash": "06918dcbe91ff9c6",
+   "lines": 83,
+   "bytes": 2369
+  },
+  "src/server/Coins.lua": {
+   "lang": "luau",
+   "module": "Coins",
+   "symbols": [
+    "Coins.add",
+    "Coins.trySpend"
+   ],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [
+    "getValue"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "2621e16a87e7dd55",
+   "lines": 27,
+   "bytes": 645
+  },
+  "src/server/Graveyard.server.lua": {
+   "lang": "luau",
+   "module": "Graveyard",
+   "symbols": [],
+   "deps": [
+    "Config"
+   ],
+   "kind": "server-script",
+   "local_functions": [
+    "battlements",
+    "branch",
+    "deadTree",
+    "edgePosition",
+    "floor",
+    "gravestone",
+    "lighting",
+    "makePart",
+    "torch",
+    "wallTorches"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "ArenaHalf",
+    "ClearRadius",
+    "FireColor",
+    "FloorColor",
+    "GravestoneCount",
+    "Lighting",
+    "MossColor",
+    "PropMargin",
+    "Seed",
+    "StoneColor",
+    "TorchHeight",
+    "TorchLightBrightness",
+    "TorchLightRange",
+    "TorchSpacing",
+    "TreeCount",
+    "WallTopHeight",
+    "WoodColor"
+   ],
+   "hash": "6b75f7b4bc6d0211",
+   "lines": 198,
+   "bytes": 7158
+  },
+  "src/server/Leaderboard.server.lua": {
+   "lang": "luau",
+   "module": "Leaderboard",
+   "symbols": [],
+   "deps": [],
+   "kind": "server-script",
+   "local_functions": [
+    "setup"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "14f84d08945e2406",
+   "lines": 21,
+   "bytes": 484
+  },
+  "src/server/Shop.lua": {
+   "lang": "luau",
+   "module": "Shop",
+   "symbols": [
+    "Shop.close",
+    "Shop.open"
+   ],
+   "deps": [
+    "Coins",
+    "Config",
+    "Remotes"
+   ],
+   "kind": "module",
+   "local_functions": [
+    "applyMaxHealth",
+    "bump",
+    "roll",
+    "send",
+    "watchCharacter"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "Blades",
+    "Player",
+    "Shop"
+   ],
+   "hash": "291321abf40ebed7",
+   "lines": 167,
+   "bytes": 4295
+  },
+  "src/server/Zombies.server.lua": {
+   "lang": "luau",
+   "module": "Zombies",
+   "symbols": [],
+   "deps": [
+    "BladeMath",
+    "Coins",
+    "Config",
+    "Remotes",
+    "Shop"
+   ],
+   "kind": "server-script",
+   "local_functions": [
+    "award",
+    "everyoneDead",
+    "finish",
+    "makePart",
+    "nearestPlayerRoot",
+    "publishZombiesLeft",
+    "spawnZombie"
+   ],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "CoinsPerKill",
+    "Color",
+    "ContactDamage",
+    "ContactRadius",
+    "CountPerWave",
+    "FirstWaveCount",
+    "Health",
+    "HealthGrowth",
+    "MaxAlive",
+    "SpawnInterval",
+    "SpawnRadius",
+    "WalkSpeed",
+    "WaveBreak"
+   ],
+   "hash": "cc530cd7113b404c",
+   "lines": 288,
+   "bytes": 9011
+  },
+  "src/shared/BladeMath.lua": {
+   "lang": "luau",
+   "module": "BladeMath",
+   "symbols": [
+    "BladeMath.getOffset"
+   ],
+   "deps": [
+    "Config"
+   ],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [
+    "BobAmount",
+    "BobSpeed",
+    "Height",
+    "OrbitRadius",
+    "OrbitSpeed"
+   ],
+   "hash": "8938d458cf780752",
+   "lines": 14,
+   "bytes": 585
+  },
+  "src/shared/Config.lua": {
+   "lang": "luau",
+   "module": "Config",
+   "symbols": [],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "config_keys": [
+    "Blades",
+    "StartCount",
+    "OrbitRadius",
+    "OrbitSpeed",
+    "SpinSpeed",
+    "Height",
+    "BobAmount",
+    "BobSpeed",
+    "Size",
+    "Color",
+    "Material",
+    "LightBrightness",
+    "LightRange",
+    "TrailLifetime",
+    "TrailWidth",
+    "Damage",
+    "HitRadius",
+    "HitCooldown",
+    "Zombies",
+    "Health",
+    "WalkSpeed",
+    "SpawnInterval",
+    "MaxAlive",
+    "SpawnRadius",
+    "CoinsPerKill",
+    "FirstWaveCount",
+    "CountPerWave",
+    "WaveBreak",
+    "HealthGrowth",
+    "ContactDamage",
+    "ContactRadius",
+    "Player",
+    "MaxHealth",
+    "Graveyard",
+    "Seed",
+    "ArenaHalf",
+    "ClearRadius",
+    "PropMargin",
+    "GravestoneCount",
+    "TreeCount",
+    "TorchSpacing",
+    "TorchHeight",
+    "WallTopHeight",
+    "StoneColor",
+    "MossColor",
+    "WoodColor",
+    "FireColor",
+    "TorchLightRange",
+    "TorchLightBrightness",
+    "FloorColor",
+    "Lighting",
+    "ClockTime",
+    "Ambient",
+    "OutdoorAmbient",
+    "Brightness",
+    "FogColor",
+    "AtmosphereDensity",
+    "AtmosphereHaze",
+    "AtmosphereColor",
+    "AtmosphereDecay",
+    "Tint",
+    "Saturation",
+    "Contrast",
+    "BloomIntensity",
+    "BloomSize",
+    "BloomThreshold",
+    "Effects",
+    "PopupLifetime",
+    "PopupRise",
+    "HitColor",
+    "BurstParticles",
+    "BurstLifetime",
+    "BurstSpeed",
+    "Ui",
+    "Panel",
+    "PanelLight",
+    "Accent",
+    "Text",
+    "TextDim",
+    "Coin"
+   ],
+   "hash": "fea56b88b5a0eebc",
+   "lines": 119,
+   "bytes": 4615
+  },
+  "src/shared/Remotes.lua": {
+   "lang": "luau",
+   "module": "Remotes",
+   "symbols": [],
+   "deps": [],
+   "kind": "module",
+   "local_functions": [],
+   "remotes_defined": [],
+   "remotes_used": {},
+   "assets": [],
+   "config_keys_used": [],
+   "hash": "4d91ece8b14af079",
+   "lines": 36,
+   "bytes": 1097
+  }
+ },
+ "engine": "roblox (rojo)",
+ "rojo": {
+  "src/shared": "ReplicatedStorage.Shared",
+  "src/server": "ServerScriptService.Server",
+  "src/client": "StarterPlayer.StarterPlayerScripts.Client"
+ },
+ "conventions": {
+  "hub_apis": [],
+  "exclusive_sites": [
+   {
+    "op": "Instance.new(\"RemoteEvent\")",
+    "only_in": [
+     "src/shared/Remotes.lua"
+    ]
+   },
+   {
+    "op": "print/warn",
+    "only_in": []
+   },
+   {
+    "op": "rbxassetid literal",
+    "only_in": []
+   }
+  ],
+  "config_modules": {
+   "src/shared/Config.lua": {
+    "keys": 80,
+    "used_by": 10
+   }
+  }
+ },
+ "used_by": {
+  "src/client/UiKit.lua": [
+   "src/client/Hud.client.lua",
+   "src/client/ShopUi.client.lua"
+  ],
+  "src/server/Coins.lua": [
+   "src/server/Shop.lua",
+   "src/server/Zombies.server.lua"
+  ],
+  "src/server/Shop.lua": [
+   "src/server/Zombies.server.lua"
+  ],
+  "src/shared/BladeMath.lua": [
+   "src/client/BladeOrbit.client.lua",
+   "src/server/Zombies.server.lua"
+  ],
+  "src/shared/Config.lua": [
+   "src/client/BladeOrbit.client.lua",
+   "src/client/CombatFx.client.lua",
+   "src/client/Hud.client.lua",
+   "src/client/ShopUi.client.lua",
+   "src/client/UiKit.lua",
+   "src/server/Blades.server.lua",
+   "src/server/Graveyard.server.lua",
+   "src/server/Shop.lua",
+   "src/server/Zombies.server.lua",
+   "src/shared/BladeMath.lua"
+  ],
+  "src/shared/Remotes.lua": [
+   "src/client/CombatFx.client.lua",
+   "src/client/ShopUi.client.lua",
+   "src/server/Shop.lua",
+   "src/server/Zombies.server.lua"
+  ]
+ }
+}
