@@ -29,8 +29,10 @@ def esc(t):
     return t.replace("\\", "\\\\").replace(":", "\\:").replace("'", "’").replace(",", "\\,")
 
 
-def text(t, x, y, size, color=TXT, font=FONT, start=0.0, fade=0.5, box=False):
+def text(t, x, y, size, color=TXT, font=FONT, start=0.0, fade=0.5, box=False, end=None):
     alpha = f"if(lt(t\\,{start})\\,0\\,min(1\\,(t-{start})/{fade}))"
+    if end is not None:  # fade out after `end`
+        alpha = f"if(gt(t\\,{end})\\,max(0\\,1-(t-{end})/{fade})\\,{alpha})"
     b = ":box=1:boxcolor=0x0F1115@0.72:boxborderw=18" if box else ""
     return (f"drawtext=fontfile='{font}':expansion=none:text='{esc(t)}':x={x}:y={y}:fontsize={size}:fontcolor={color}"
             f":alpha='{alpha}'{b}")
@@ -48,8 +50,10 @@ def enc(out):
 
 def seg_hook(d, out):
     v = (f"[0:v]{GAME_CROP},crop=1365:768:272:0,scale=1920:1080,setsar=1,"
-         f"{text('Every AI coding session starts cold.', '(w-text_w)/2', 'h*0.74', 72, start=0.6, box=True)},"
-         f"{text('It forgets what you decided, and what you asked for.', '(w-text_w)/2', 'h*0.86', 44, color=CY, start=4, box=True)}[v]")
+         f"{text('Thamer Alhussain', '(w-text_w)/2', 'h*0.36', 84, start=0.3, end=7.6, box=True)},"
+         f"{text('Challenge 2: Deliver AI with Less Compute  ·  DevMemory', '(w-text_w)/2', 'h*0.50', 46, color=CY, start=1.0, end=7.6, box=True)},"
+         f"{text('Every AI coding session starts cold.', '(w-text_w)/2', 'h*0.74', 72, start=8.4, box=True)},"
+         f"{text('It forgets what you decided, and what you asked for.', '(w-text_w)/2', 'h*0.86', 44, color=CY, start=12, box=True)}[v]")
     run(["-ss", "6", "-t", str(d), "-i", FOOT / CLIPS["devmemory"], "-filter_complex", v, "-map", "[v]", *enc(out)])
 
 
@@ -170,7 +174,7 @@ def seg_also(d, out):
 # ---- Blade Swarm test case: race prompt R6 in the DevMemory build ----
 def seg_input_bs(d, out):
     a, b, c = OUT / "_bin_a.mp4", OUT / "_bin_b.mp4", OUT / "_bin_c.mp4"
-    d1 = round(d * 0.3, 2); d2 = round(d * 0.33, 2); d3 = round(d - d1 - d2, 2)
+    d1 = round(d * 0.34, 2); d2 = round(d * 0.22, 2); d3 = round(d - d1 - d2, 2)
     shot("bs_session_R5.png", "1600:900:0:0", d1, a, [("Blade Swarm: every AI session, recorded by DevMemory", 0.4)])
     shot("bs_session_R5.png", "1025:577:300:90", d2, b,
          [("Session 8: the user picks the rarity colors", 0.4)], box=(34, 192, 958, 64, 1.5))
@@ -311,7 +315,8 @@ def seg_close(d, out):
     v = (f"[0:v]{GAME_CROP},crop=1365:768:272:0,scale=1920:1080,boxblur=12:2,eq=brightness=-0.25,setsar=1,"
          f"{text('DevMemory', '(w-text_w)/2', 'h/2-150', 120, start=0.2)},"
          f"{text('Preserve everything. Send only what earns its tokens.', '(w-text_w)/2', 'h/2+10', 54, color=VIO, start=0.8)},"
-         f"{text('Local-first  ·  Claude Code, Codex, any MCP client  ·  tested on 28 unseen tasks', '(w-text_w)/2', 'h/2+110', 34, color=MUT, start=1.4)}[v]")
+         f"{text('Local-first  ·  Claude Code, Codex, any MCP client  ·  tested on 28 unseen tasks', '(w-text_w)/2', 'h/2+110', 34, color=MUT, start=1.4)},"
+         f"{text('Thamer Alhussain  ·  HUMAIN–Misk Future AI Builders Hackathon', '(w-text_w)/2', 'h-140', 34, color=TXT, start=3.0)}[v]")
     run(["-ss", "30", "-t", str(d), "-i", FOOT / CLIPS["devmemory"], "-filter_complex", v, "-map", "[v]", *enc(out)])
 
 
