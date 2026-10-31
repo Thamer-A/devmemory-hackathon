@@ -6,7 +6,7 @@ All numbers come from logged runs in `results/`. Cost is the Claude Code CLI's `
 - **C2:** the DevMemory map only.
 - **C3 / devmemory:** full DevMemory (map + captured sessions + freshness).
 
-## 1. Fixed benchmark: held-out set (run once, frozen before tuning)
+## 1. Fixed benchmark: held-out set 1 (frozen before tuning)
 - 12 unseen tasks: 4 on the Roblox game P1, 8 on the Python app P2. Written by a separate agent and hash-frozen (`bench/HELDOUT_FREEZE.txt`).
 - 3 repeats, Claude Haiku 5.5, Sonnet 5.5 as the model-choice comparison.
 
@@ -31,6 +31,29 @@ All numbers come from logged runs in `results/`. Cost is the Claude Code CLI's `
   - Turning off the freshness flags (C3nofresh) did not change pass rates on stale-memory tasks.
 - **History-dependent tasks** (decisions that exist only in a past session): C3 solved them, and the others mostly could not. P1 B1 dev: 3/3 vs 0/3 for everyone else.
 
+### Held-out set 2 (16 more unseen tasks, frozen before any run)
+- **Tasks:** 8 on P1 (`H5..H12`) and 8 on P2 (`E1..E8`), 2 of each type per project. They were written by a separate agent that did not read DevMemory's code.
+- **Validation:** every task passed both grader controls. The 4 history graders were also checked against a plausible "reasonable guess" solution, and each rejected it.
+- **Freeze:** hash-frozen in `bench/HELDOUT2_FREEZE.txt` (TOTAL `fea13b23…`) and committed before the run.
+- **Run:** once with the current (shipped) code. Claude Haiku 5.5, 3 repeats, 192 runs, 0 harness or grader errors (`results/heldout2_report.md`).
+
+| Condition | Pass (95% CI) | Meets 80% floor | $/success | Input tok/run |
+|---|---|---|---|---|
+| C0 bare | 79% (66–88) | no | $0.0095 | 153k |
+| C1 CLAUDE.md | 79% (66–88) | no | $0.0106 | 180k |
+| C2 map only | 81% (68–90) | yes | $0.0093 | 156k |
+| **C3 DevMemory** | **98% (89–100)** | **yes** | **$0.0076** | 148k |
+
+- **By type:**
+  - history: C3 12/12 vs 3–4/12;
+  - code: 11–12/12 for all;
+  - stale: 11–12/12 for all;
+  - unrelated: 11–12/12 for all.
+- **By project:**
+  - P1: C3 24/24 vs 20–21/24;
+  - P2: C3 23/24 vs 17–18/24. The P2 tie with the hand-written file seen on set 1 did not repeat.
+- **Stale tasks:** again no separation between conditions. The freshness flags are not what drives the gain; carrying the user's earlier decisions is.
+
 ## 2. Multi-session build, scripted (8 prompts, one fresh Sonnet session each)
 From `results/series_blade_report.md` and `results/series/blade/PLAYTEST.md`. One run per condition: a case study.
 
@@ -43,16 +66,21 @@ From `results/series_blade_report.md` and `results/series/blade/PLAYTEST.md`. On
 ## 3. Adaptive race, Roblox game (playtest after every prompt, next prompt by fixed rule)
 From `results/adaptive_blade_report.md`. Each condition got 16 prompts.
 
-| | Cost | Input tokens | Roadmap features reached | Failing at end |
-|---|---|---|---|---|
-| none | $3.41 | 3.08M | 7/10 | shop (9 fix prompts in a row) |
-| AGENTS.md | $2.88 | 3.41M | 9/10 | waves, shop, HUD |
-| **DevMemory** | **$2.48** | **1.85M** | 9/10 | game-over reset |
+| | Cost | Input tokens | Feature prompts / fix prompts (of 16) |
+|---|---|---|---|
+| none | $3.41 | 3.08M | 7 / 9 |
+| AGENTS.md | $2.88 | 3.41M | 9 / 7 |
+| **DevMemory** | **$2.48** | **1.85M** | 9 / 7 |
 
-Disclosures:
+**Correction (human playtest, 31 Oct):**
+- **All three final builds are playable.** In each one, waves advance and the shop works. An earlier version of this table listed end-of-race failures (none: shop; AGENTS.md: waves, shop, HUD). Those were verdicts from the automated scripted-player check, and the human playtest did not confirm them.
+- **The automated check was flaky.** Checks flipped from pass to fail between consecutive prompts with no related code change. For example, AGENTS.md passed every check at P14, then "failed" waves, shop and HUD at P16.
+- **Each false failure triggered a bug-report prompt.** All three conditions received 7–9 fix prompts, some of them for bugs that did not exist. The token and cost totals are measured, but each includes work spent on phantom bugs. Read the token gap as **indicative, not clean**.
+- The fixed held-out benchmarks (sections 1–2) do not use this playtest and are unaffected.
+
+Other disclosures:
 - The automated playtest protocol was revised 5 times during the race. Each change applied to all conditions from that point on.
 - The `none` condition's Rojo sync crashed at its P6. Its P7–P12 runs were invalidated and re-run from the checkpoint.
-- A scripted test player cannot play like a human, so this race is qualitative.
 
 ## 4. Adaptive race, web app (team task board, fully automated API + headless-Chrome checks)
 From `results/webrace_taskboard.jsonl`.
@@ -93,6 +121,11 @@ From `demo/cross-tool/RESULTS.md`. The task board's 8 Claude Code sessions were 
 - This is a case study: n = 3 per variant, on one task.
 
 ## Headline
-Across the fixed held-out benchmark, DevMemory was the only condition above the accuracy floor, with the lowest cost per successful task. In multi-session building it used roughly half the input tokens of the alternatives. It is not universally better:
-- On the Python held-out project, the hand-written file matched it.
+- **Held-out benchmarks:** on two sets of unseen tasks (28 tasks, 336 graded Haiku runs across the four conditions), DevMemory was the only condition above the 80% accuracy floor on both sets. On set 2 it was also the cheapest per successful task. The gain comes from tasks that depend on earlier sessions.
+- **Across tools:** memory recorded in Claude Code let Codex recover a user's earlier spec that it could not recover alone.
+- **Multi-session builds:** it used fewer input tokens. The Roblox race's playtest was flaky, so that gap is indicative only.
+
+It is not universally better:
+- On the set-1 Python project, the hand-written file matched it.
+- The retrieval change cost a point on set 1 (86% → 83%).
 - In the first web-app race it lost outright, which exposed a retrieval gap we then fixed.
