@@ -12,3 +12,6 @@ demo/taskboard/*/data/
 demo/taskboard/*/_server.log
 demo/taskboard/.chrome/
 demo/footage/
+demo/video/out/
+demo/video/build.log
+dist/

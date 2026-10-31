@@ -49,6 +49,8 @@ async function boot() {
   }
   renderVault();
   const open = params.get("open");
+  if (params.get("task")) packState.task = params.get("task"); // ?open=pack&task=... builds that pack on load
+  if (open === "pack" && packState.task) setTimeout(() => { const b = $("#p-go"); if (b) b.click(); }, 300);
   if (open && open !== "overview") { const i = open.indexOf(":"); i < 0 ? openTab(open, "") : openTab(open.slice(0, i), open.slice(i + 1)); }
   else openTab("overview", "");
   if (params.get("home")) showHome();
