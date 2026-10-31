@@ -5,3 +5,4 @@ __pycache__/
 results/raw/
 *.log
 demo/build/
+docs/deck/node_modules
