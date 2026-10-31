@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 import threading
 import webbrowser
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -22,11 +25,86 @@ def _sid(s: dict) -> str:
     return str(s.get("session_id") or s.get("_meta", ""))
 
 
+REPO = Path(__file__).resolve().parent.parent
+EXAMPLES = [
+    {"name": "Blade Swarm (16 sessions)", "desc": "Roblox + Rojo game built over 16 captured sessions",
+     "project": REPO / "demo/memory-example/blade-swarm-race",
+     "store": REPO / "demo/memory-example/blade-swarm-race/.devmemory"},
+    {"name": "CoinRush (benchmark fixture)", "desc": "Small Roblox benchmark project (P1)",
+     "project": REPO / "bench/projects/P1/game", "store": REPO / "bench/projects/P1/devmemory"},
+]
+VAULT_CAP = 3 * 1024 * 1024
+
+
+def recents_file() -> Path:
+    base = os.environ.get("APPDATA") or str(Path.home() / ".config")
+    return Path(base) / "DevMemory" / "recents.json"
+
+
+def load_recents() -> list[dict]:
+    try:
+        d = json.loads(recents_file().read_text(encoding="utf-8"))
+        return [r for r in d if isinstance(r, dict) and r.get("project")]
+    except (OSError, ValueError):
+        return []
+
+
+def add_recent(project: Path, store: Path, name: str) -> None:
+    rs = [r for r in load_recents() if r.get("project") != str(project) or r.get("store") != str(store)]
+    rs.insert(0, {"project": str(project), "store": str(store), "name": name,
+                  "last_opened": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+    try:
+        f = recents_file()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(rs[:12], indent=1), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def pick_dialog(kind: str) -> str:
+    """Native folder dialog (tkinter) in a fresh thread with its own Tk root."""
+    res: list[str] = []
+
+    def run():
+        try:
+            import tkinter
+            from tkinter import filedialog
+            root = tkinter.Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+            root.update()
+            res.append(filedialog.askdirectory(
+                parent=root, title="Select project folder" if kind == "project" else "Select memory store folder",
+                mustexist=True) or "")
+            root.destroy()
+        except Exception as e:  # no display / no tk
+            res.append("")
+            print("pick failed:", e, flush=True)
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(300)
+    return str(Path(res[0])) if res and res[0] else ""
+
+
 class State:
-    def __init__(self, project: Path, store: Path):
-        self.project, self.store = Path(project).resolve(), Path(store)
+    def __init__(self, project: Path | None, store: Path | None):
         self.lock = threading.Lock()
+        self.set(project, store)
+
+    def set(self, project, store):
+        self.project = Path(project).resolve() if project else None
+        self.store = Path(store).resolve() if store else None
         self.map = None
+
+    def name(self) -> str:
+        return self.project.name if self.project else ""
+
+    def in_roots(self, p: Path) -> bool:
+        p = p.resolve()
+        for root in (self.project, self.store):
+            if root and (p == root or root in p.parents):
+                return True
+        return False
 
     def get_map(self, rescan: bool = False) -> dict:
         with self.lock:
@@ -45,7 +123,8 @@ class State:
 
     def session_view(self, s: dict) -> dict:
         fr = freshness(s, self.project)
-        return {"id": _sid(s), "started_at": s.get("started_at", ""), "prompt": s.get("prompt", ""),
+        return {"id": _sid(s), "meta_file": s.get("_meta", ""), "raw_record": s.get("raw_record", ""),
+                "started_at": s.get("started_at", ""), "prompt": s.get("prompt", ""),
                 "usage": s.get("usage") or {}, "files_edited": s.get("files_edited", []),
                 "files_read": s.get("files_read", []), "freshness": fr["status"]}
 
@@ -66,8 +145,112 @@ def _tree_files(m: dict) -> list[dict]:
              "kind": i.get("kind")} for rel, i in sorted(m["files"].items())]
 
 
+def _vault_tree(d: Path, root: Path) -> list[dict]:
+    out = []
+    try:
+        entries = sorted(d.iterdir(), key=lambda p: (p.is_file(), p.name.lower()))
+    except OSError:
+        return out
+    for p in entries:
+        rel = p.relative_to(root).as_posix()
+        if p.is_dir():
+            out.append({"name": p.name, "path": rel, "type": "dir", "children": _vault_tree(p, root)})
+        else:
+            try:
+                size = p.stat().st_size
+            except OSError:
+                size = 0
+            out.append({"name": p.name, "path": rel, "type": "file", "size": size})
+    return out
+
+
+def _resolve_in(base: Path, rel: str) -> Path | None:
+    if not rel or "\x00" in rel:
+        return None
+    p = Path(rel)
+    if p.is_absolute() or ".." in p.parts:
+        return None
+    fp = (base / p).resolve()
+    if fp != base.resolve() and base.resolve() not in fp.parents:
+        return None
+    return fp
+
+
+def home_info(st: State) -> dict:
+    def ex(e):
+        return {"name": e["name"], "desc": e["desc"], "project": str(e["project"]), "store": str(e["store"]),
+                "exists": Path(e["store"]).exists()}
+    rec = [r for r in load_recents() if Path(r["project"]).exists()]
+    return {"current": {"project": str(st.project) if st.project else None, "store": str(st.store) if st.store else None,
+                        "name": st.name()},
+            "recents": rec, "examples": [ex(e) for e in EXAMPLES]}
+
+
+def api_post(st: State, path: str, q: dict):
+    g = lambda k, d="": (q.get(k) or [d])[0]
+    if path == "/api/pick":
+        kind = g("kind", "project")
+        p = pick_dialog(kind)
+        return {"path": p, "cancelled": not p}
+    if path == "/api/open":
+        pr, sr = g("project"), g("store")
+        if not pr:
+            return 400, {"error": "project required"}
+        project = Path(pr)
+        if not project.is_dir():
+            return 400, {"error": f"not a folder: {pr}"}
+        store = Path(sr) if sr else project / ".devmemory"
+        if not store.is_dir() and not sr:
+            pass
+        has_map = (store / "index" / "map.json").is_file()
+        if not has_map and g("scan") != "1":
+            return {"needs_scan": True, "project": str(project.resolve()), "store": str(store)}
+        with st.lock:
+            st.set(project, store)
+        if not has_map:
+            scan(st.project, st.store)
+        st.get_map()
+        add_recent(st.project, st.store, st.project.name)
+        return {"ok": True, "name": st.name(), "scanned": not has_map}
+    if path == "/api/reveal":
+        rel = g("path")
+        cands = []
+        if rel and Path(rel).is_absolute():
+            cands = [Path(rel)]
+        else:
+            for base in (st.store, st.project):
+                if base and (c := _resolve_in(base, rel)):
+                    cands.append(c)
+        cands = [c for c in cands if c.exists() and st.in_roots(c)]
+        if not cands or (rel and ".." in Path(rel).parts):
+            return 400, {"error": "path outside project/store"}
+        if g("dry") != "1" and os.name == "nt":
+            subprocess.Popen(["explorer", "/select," + str(cands[0]).replace("/", "\\")])
+        return {"ok": True, "path": str(cands[0])}
+    return 404, {"error": "unknown endpoint"}
+
+
 def api(st: State, path: str, q: dict):
     g = lambda k, d="": (q.get(k) or [d])[0]
+    if path == "/api/home":
+        return home_info(st)
+    if path == "/api/state":
+        return {"project": str(st.project) if st.project else None, "name": st.name()}
+    if st.project is None:
+        return 409, {"error": "no project open"}
+    if path == "/api/vault":
+        if not st.store.is_dir():
+            return {"root": st.store.name, "path": str(st.store), "tree": []}
+        return {"root": st.store.name, "path": str(st.store), "tree": _vault_tree(st.store, st.store)}
+    if path == "/api/vault/file":
+        fp = _resolve_in(st.store, g("path"))
+        if fp is None or not fp.is_file():
+            return 404, {"error": "not found in store"}
+        size = fp.stat().st_size
+        if size > VAULT_CAP:
+            return 413, {"error": f"file too large ({size} bytes, cap {VAULT_CAP})", "size": size}
+        return {"path": fp.relative_to(st.store.resolve()).as_posix(), "size": size, "abs": str(fp),
+                "content": fp.read_text(encoding="utf-8", errors="replace")}
     if path == "/api/overview":
         m = st.get_map()
         ss = st.sessions()
@@ -82,7 +265,7 @@ def api(st: State, path: str, q: dict):
             tout += u.get("output_tokens") or 0
             tcache += (u.get("cache_read_tokens") or 0) + (u.get("cache_creation_tokens") or 0)
             cost += u.get("cost_usd_list") or 0
-        return {"project": m["project"], "engine": m["engine"], "file_count": len(m["files"]),
+        return {"project": m["project"], "dir_name": st.name(), "engine": m["engine"], "file_count": len(m["files"]),
                 "session_count": len(ss), "freshness": fresh, "tokens": {"input": tin, "output": tout, "cache": tcache},
                 "cost_usd": round(cost, 4), "conventions": convention_lines(m), "rojo": m.get("rojo", {}),
                 "scanned_at": m.get("scanned_at"), "store": str(st.store), "project_path": str(st.project),
@@ -201,6 +384,20 @@ def make_handler(st: State):
             self.end_headers()
             self.wfile.write(body)
 
+        def do_POST(self):
+            u = urlparse(self.path)
+            try:
+                res = api_post(st, u.path, parse_qs(u.query))
+                code, data = res if isinstance(res, tuple) else (200, res)
+                self._send(code, json.dumps(data).encode("utf-8"), "application/json; charset=utf-8")
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            except Exception as e:
+                try:
+                    self._send(500, json.dumps({"error": str(e)}).encode(), "application/json")
+                except Exception:
+                    pass
+
         def do_GET(self):
             u = urlparse(self.path)
             try:
@@ -223,12 +420,22 @@ def make_handler(st: State):
     return H
 
 
-def serve(project: Path, store: Path | None = None, port: int = 8765, open_browser: bool = True):
-    project = Path(project).resolve()
-    st = State(project, store or store_path(project))
-    srv = ThreadingHTTPServer(("127.0.0.1", port), make_handler(st))
+def make_server(project: Path | None, store: Path | None = None, port: int = 8765):
+    """Build (but do not start) the server; port 0 picks a free port. Returns (server, state)."""
+    if project is not None:
+        project = Path(project).resolve()
+        store = store or store_path(project)
+        if (Path(store) / "index" / "map.json").is_file():
+            add_recent(project, Path(store).resolve(), project.name)
+    st = State(project, store)
+    return ThreadingHTTPServer(("127.0.0.1", port), make_handler(st)), st
+
+
+def serve(project: Path | None, store: Path | None = None, port: int = 8765, open_browser: bool = True):
+    srv, st = make_server(project, store, port)
+    port = srv.server_address[1]
     url = f"http://127.0.0.1:{port}/"
-    print(f"DevMemory UI: {url}  (project {project}, store {st.store})  Ctrl+C to stop", flush=True)
+    print(f"DevMemory UI: {url}  (project {st.project}, store {st.store})  Ctrl+C to stop", flush=True)
     if open_browser:
         threading.Timer(0.4, lambda: webbrowser.open(url)).start()
     try:

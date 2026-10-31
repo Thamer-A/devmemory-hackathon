@@ -9,12 +9,13 @@
 <body>
 <div id="app">
   <header id="topbar">
-    <div class="brand"><span class="logo"></span><b>DevMemory</b><span id="proj-name" class="muted"></span></div>
+    <div class="brand" title="Switch project"><span class="logo"></span><b>DevMemory</b><span id="proj-name" class="muted"></span></div>
     <button id="qs-btn" class="qs-btn" title="Quick switcher (Ctrl/Cmd+K)"><span>Search vault...</span><kbd>Ctrl K</kbd></button>
     <div class="top-actions">
       <button class="chip-btn" data-open="graph" title="Graph view (G)">Graph <kbd>G</kbd></button>
       <button class="chip-btn" data-open="pack" title="Pack Lab">Pack Lab</button>
       <button class="chip-btn" id="rescan" title="Rescan project">Rescan</button>
+      <button class="chip-btn" data-act="switch" title="Open another project">Switch project</button>
     </div>
   </header>
   <aside id="left">
@@ -31,6 +32,9 @@
   </aside>
   <footer id="status"><span id="st-left"></span><span id="st-right"></span></footer>
 </div>
+<div id="home" class="hidden"></div>
+<div id="dlg" class="hidden"></div>
+<div id="toasts"></div>
 <div id="qs" class="hidden">
   <div class="qs-box">
     <input id="qs-input" placeholder="Jump to file, session, decision..." autocomplete="off" spellcheck="false">

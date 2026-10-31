@@ -3,33 +3,55 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (n) => Number(n || 0).toLocaleString("en-US");
 const short = (s, n) => { s = String(s || "").replace(/\s+/g, " ").trim(); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
-const api = async (path) => {
-  const r = await fetch(path);
+const api = async (path, method = "GET") => {
+  const r = await fetch(path, { method });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || r.status);
   return j;
 };
+const post = (path) => api(path, "POST");
+function toast(msg, kind = "err") {
+  const t = document.createElement("div");
+  t.className = "toast " + kind; t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.classList.add("out"), 3800); setTimeout(() => t.remove(), 4300);
+}
+const spinner = (msg = "Loading") => `<div class="spin-wrap"><div class="spin"></div><span>${esc(msg)}…</span></div>`;
+const human = (n) => (n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1) + " KB" : (n / 1048576).toFixed(1) + " MB");
 const FLAB = { fresh: "fresh", "partly-stale": "partly stale", stale: "stale", "context-changed": "context changed" };
 const TOOL_ICO = { Read: "▤", Edit: "✎", Write: "✚", Grep: "⌕", Glob: "✱", Bash: "❯", Task: "◈" };
 
-const S = { ov: null, files: [], sessions: [], decisions: [], tabs: [], active: null, treeOpen: new Set(["src"]), secOpen: { Project: true, Files: true, Sessions: true, Decisions: true }, filter: "", cache: {} };
+const S = { ov: null, files: [], sessions: [], decisions: [], vault: null, tabs: [], active: null, treeOpen: new Set(["src"]), vOpen: new Set(), secOpen: { "Memory vault": true, Project: true, Files: true, Sessions: true, Decisions: true }, filter: "", cache: {}, loaded: false };
 const sidx = {};      // session id -> 1-based index
-const cget = (p) => (S.cache[p] ||= api(p));
+const cget = (p) => (S.cache[p] ||= api(p).catch((e) => { delete S.cache[p]; throw e; }));
 
 // ---------- boot ----------
-async function boot() {
-  try {
-    [S.ov, S.files, S.sessions, S.decisions] = await Promise.all([
-      api("/api/overview"), api("/api/files").then((x) => x.files), api("/api/sessions").then((x) => x.sessions), api("/api/decisions").then((x) => x.decisions)]);
-  } catch (e) {
-    $("#view").innerHTML = `<div class="page"><h1>Cannot load project</h1><p class="muted">${esc(e.message)}</p></div>`;
-    return;
-  }
+async function loadProject() {
+  [S.ov, S.files, S.sessions, S.decisions, S.vault] = await Promise.all([
+    api("/api/overview"), api("/api/files").then((x) => x.files), api("/api/sessions").then((x) => x.sessions), api("/api/decisions").then((x) => x.decisions), api("/api/vault")]);
+  S.cache = {}; S.tabs = []; S.active = null; S.filter = ""; $("#filter").value = "";
+  for (const k of Object.keys(sidx)) delete sidx[k];
   S.sessions.forEach((s, i) => (sidx[s.id] = i + 1));
-  $("#proj-name").textContent = S.ov.project + " · " + S.ov.engine;
-  renderVault();
-  openTab("overview", "");
+  S.loaded = true;
+  $("#proj-name").textContent = S.ov.dir_name + " · " + S.ov.engine;
+  document.title = "DevMemory — " + S.ov.dir_name;
   updateStatus();
+}
+async function boot() {
+  const params = new URLSearchParams(location.search);
+  let st = {};
+  try { st = await api("/api/state"); } catch (e) { toast(e.message); }
+  if (!st.project) { renderVault(); return showHome(); }
+  try { await loadProject(); } catch (e) {
+    toast("Cannot load project: " + e.message);
+    $("#view").innerHTML = `<div class="page"><h1>Cannot load project</h1><p class="muted">${esc(e.message)}</p></div>`;
+    return showHome();
+  }
+  renderVault();
+  const open = params.get("open");
+  if (open && open !== "overview") { const i = open.indexOf(":"); i < 0 ? openTab(open, "") : openTab(open.slice(0, i), open.slice(i + 1)); }
+  else openTab("overview", "");
+  if (params.get("home")) showHome();
 }
 
 function updateStatus() {
@@ -71,10 +93,35 @@ function renderTree(node, prefix, filtering) {
 function secHead(name, n) {
   return `<div class="sec-h" data-sec="${name}"><span class="caret ${S.secOpen[name] ? "open" : ""}">▶</span>${name}${n != null ? `<span class="n">${n}</span>` : ""}</div>`;
 }
+// ---- memory vault tree (real files in the store dir) ----
+const VICO = { md: ["¶", "vi-md"], json: ["{ }", "vi-json"], jsonl: ["≋", "vi-jsonl"], other: ["▫", "vi-other"] };
+function vkind(name) { return name.endsWith(".jsonl") ? "jsonl" : name.endsWith(".json") ? "json" : /\.(md|markdown)$/i.test(name) ? "md" : "other"; }
+function vcount(nodes) { return nodes.reduce((n, x) => n + (x.type === "dir" ? vcount(x.children) : 1), 0); }
+function renderVTree(nodes, q, depth) {
+  let h = "";
+  for (const n of nodes) {
+    if (n.type === "dir") {
+      const kids = q ? n.children.filter(function f(c) { return c.type === "dir" ? c.children.some(f) : c.path.toLowerCase().includes(q); }) : n.children;
+      if (q && !kids.length) continue;
+      const open = !!q || S.vOpen.has(n.path);
+      h += `<div><div class="item vrow" data-vdir="${esc(n.path)}"><span class="caret ${open ? "open" : ""}">▶</span><span class="ico vi-dir">▣</span><span class="t">${esc(n.name)}</span><span class="sub">${vcount(n.children)}</span></div>`;
+      if (open) h += `<div class="kids">${renderVTree(kids, q, depth + 1)}</div>`;
+      h += "</div>";
+    } else {
+      if (q && !n.path.toLowerCase().includes(q)) continue;
+      const [g, c] = VICO[vkind(n.name)];
+      h += `<div class="item vrow ${isActive("vault", n.path)}" data-open="vault" data-id="${esc(n.path)}" title="${esc(n.path)}"><span class="ico ${c}">${g}</span><span class="t">${(() => { const k = n.name.indexOf(".", 1); return k > 0 && n.name.length > 20 ? `<span class="stem">${esc(n.name.slice(0, k))}</span><span class="ext">${esc(n.name.slice(k))}</span>` : esc(n.name); })()}</span><span class="sub">${human(n.size)}</span></div>`;
+    }
+  }
+  return h;
+}
 function renderVault() {
+  if (!S.loaded) { $("#vault").innerHTML = '<div class="empty" style="padding:14px">No project open.</div>'; return; }
   const q = S.filter.toLowerCase();
   const files = q ? S.files.filter((f) => f.path.toLowerCase().includes(q)) : S.files;
-  let h = secHead("Project");
+  let h = secHead("Memory vault");
+  if (S.secOpen["Memory vault"]) h += `<div class="vroot" title="${esc(S.vault.path)}"><span class="ico vi-dir">◈</span>${esc(S.vault.root)}</div>` + (S.vault.tree.length ? renderVTree(S.vault.tree, q, 0) : '<div class="empty">Store is empty. Rescan to create it.</div>');
+  h += secHead("Project");
   if (S.secOpen.Project) h += itemHtml(isActive("overview", ""), "▦", "Overview", "", 'data-open="overview" data-id=""') +
     itemHtml(isActive("conventions", ""), "☰", "Conventions", S.ov.conventions.length, 'data-open="conventions" data-id=""') +
     itemHtml(isActive("map", ""), "▤", "Project map", "", 'data-open="map" data-id=""') +
@@ -95,6 +142,8 @@ function renderVault() {
 $("#vault").addEventListener("click", (e) => {
   const sec = e.target.closest("[data-sec]");
   if (sec) { S.secOpen[sec.dataset.sec] = !S.secOpen[sec.dataset.sec]; return renderVault(); }
+  const vd = e.target.closest("[data-vdir]");
+  if (vd) { const p = vd.dataset.vdir; S.vOpen.has(p) ? S.vOpen.delete(p) : S.vOpen.add(p); return renderVault(); }
   const dir = e.target.closest("[data-dir]");
   if (dir) { const p = dir.dataset.dir; S.treeOpen.has(p) ? S.treeOpen.delete(p) : S.treeOpen.add(p); return renderVault(); }
   const it = e.target.closest("[data-open]");
@@ -109,8 +158,8 @@ $("#rescan").onclick = async () => {
   const b = $("#rescan"); b.textContent = "Scanning...";
   try {
     S.files = (await api("/api/files?rescan=1")).files; S.cache = {};
-    S.ov = await api("/api/overview"); renderVault(); updateStatus(); render();
-  } catch (e) { alert(e.message); }
+    [S.ov, S.vault] = await Promise.all([api("/api/overview"), api("/api/vault")]); renderVault(); updateStatus(); render(); toast("Rescan complete", "ok");
+  } catch (e) { toast("Rescan failed: " + e.message); }
   b.textContent = "Rescan";
 };
 
@@ -124,6 +173,11 @@ function titleOf(type, id) {
     case "pack": return "Pack Lab";
     case "file": return id.split("/").pop();
     case "session": return `Session S${sidx[id] || "?"}`;
+    case "vault": {
+      const m = id.match(/^sessions\/(.+?)(\.meta\.json|\.jsonl)$/), s = m && S.sessions.find((x) => (x.meta_file || "").startsWith(m[1] + "."));
+      if (s) return `S${sidx[s.id]} ${m[2] === ".jsonl" ? "raw" : "note"}`;
+      return id.split("/").pop();
+    }
     case "decision": return "Decision " + id.replace("d", "#");
     case "convention": return "Convention " + id.replace("c", "#");
   }
@@ -131,7 +185,9 @@ function titleOf(type, id) {
 }
 function openTab(type, id) {
   id = id || "";
+  if (!S.loaded) return;
   const key = keyOf(type, id);
+  if (type === "vault") { const p = id.split("/"); for (let i = 1; i < p.length; i++) S.vOpen.add(p.slice(0, i).join("/")); }
   if (!S.tabs.find((t) => t.key === key)) S.tabs.push({ key, type, id });
   S.active = key;
   renderTabs(); renderVault(); render();
@@ -164,13 +220,19 @@ async function render() {
   if (graphCtl) { graphCtl.stop(); graphCtl = null; }
   const v = $("#view");
   const my = S.active;
+  const spin = setTimeout(() => { if (S.active === my) v.innerHTML = spinner(); }, 140);
   try {
-    const R = { overview: vOverview, conventions: vConventions, map: vMap, file: vFile, session: vSession, decision: vDecision, convention: vConvention, graph: vGraph, pack: vPack }[tab.type];
+    const R = { overview: vOverview, conventions: vConventions, map: vMap, file: vFile, session: vSession, decision: vDecision, convention: vConvention, graph: vGraph, pack: vPack, vault: vVault }[tab.type];
+    if (!R) throw new Error("Unknown view: " + tab.type);
     const out = await R(v, tab.id);
+    clearTimeout(spin);
     if (S.active !== my) return;
     setSide(out || { linked: [], props: [] });
   } catch (e) {
-    v.innerHTML = `<div class="page"><h1>Error</h1><p class="muted">${esc(e.message)}</p></div>`;
+    clearTimeout(spin);
+    if (S.active !== my) return;
+    v.innerHTML = `<div class="page"><h1>Cannot open this item</h1><p class="muted">${esc(e.message)}</p></div>`;
+    toast(e.message);
     setSide({ linked: [], props: [] });
   }
 }
@@ -483,6 +545,336 @@ function makeGraph(wrap, data) {
   };
 }
 
+// ---------- markdown renderer + wikilinks ----------
+const vflat = () => { const o = []; (function w(ns) { ns.forEach((n) => (n.type === "dir" ? w(n.children) : o.push(n))); })(S.vault ? S.vault.tree : []); return o; };
+const baseNoExt = (p) => p.split("/").pop().replace(/\.(md|json|jsonl)$/i, "").replace(/\.meta$/, "");
+function resolveLink(raw) {
+  const n = String(raw).split("#")[0].trim();
+  if (!n) return null;
+  const lo = n.toLowerCase(), lne = lo.replace(/\.md$/, ""), vf = vflat();
+  let m = vf.find((f) => f.path.toLowerCase() === lo || f.path.toLowerCase().replace(/\.md$/, "") === lne);
+  if (m) return ["vault", m.path];
+  if ((m = S.files.find((f) => f.path === n))) return ["file", m.path];
+  const sm = n.match(/^S(\d+)$/i);
+  const sess = (sm && S.sessions[+sm[1] - 1]) || S.sessions.find((s) => (n.length >= 6 && s.id.startsWith(n)) || (s.meta_file || "").replace(/\.meta\.json$/, "") === n);
+  if (sess) return ["vault", "sessions/" + sess.meta_file];
+  const dm = n.match(/^(?:d|decision\s*#?)(\d+)$/i);
+  if (dm && S.decisions.find((d) => d.id === "d" + dm[1])) return ["decision", "d" + dm[1]];
+  if ((m = vf.find((f) => f.name.toLowerCase() === lo || baseNoExt(f.path).toLowerCase() === lne))) return ["vault", m.path];
+  const fm = S.files.filter((f) => f.path.split("/").pop().toLowerCase() === lo || f.path.split("/").pop().toLowerCase().replace(/\.[^.]+$/, "") === lne);
+  if (fm.length === 1) return ["file", fm[0].path];
+  return null;
+}
+function wikiHtml(name, label) {
+  const r = resolveLink(name);
+  return r ? `<a class="wl" data-open="${r[0]}" data-id="${esc(r[1])}" title="${esc(r[1])}">${esc(label)}</a>` : `<span class="wl dead" title="No matching note for [[${esc(name)}]]">${esc(label)}</span>`;
+}
+function mdInline(s) {
+  const hold = [], keep = (h) => "\u0001" + (hold.push(h) - 1) + "\u0001";
+  s = s.replace(/`([^`]+)`/g, (_, c) => keep(S.files.some((f) => f.path === c) ? `<code class="fl">${wikiHtml(c, c)}</code>` : `<code>${esc(c)}</code>`));
+  s = s.replace(/\[\[([^\]\n]+?)\]\]/g, (_, inner) => { const [n, l] = inner.split("|"); return keep(wikiHtml(n.trim(), (l || n).trim())); });
+  s = s.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_, t, u) => {
+    if (/^https?:/i.test(u)) return keep(`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`);
+    if (/^(javascript|data|vbscript):/i.test(u)) return keep(esc(t));
+    return keep(wikiHtml(decodeURIComponent(u.replace(/^\.?\//, "")), t));
+  });
+  s = esc(s);
+  s = s.replace(/\*\*([^*\n]+)\*\*|__([^_\n]+)__/g, (_, a, b) => `<strong>${a || b}</strong>`);
+  s = s.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>").replace(/(^|[^_\w])_([^_\n]+)_(?![_\w])/g, "$1<em>$2</em>");
+  s = s.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<]*[^\s<.,;:!?)])/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  return s.replace(/\u0001(\d+)\u0001/g, (_, i) => hold[+i]);
+}
+function mdList(items) {
+  let h = "", st = [];
+  for (const it of items) {
+    const t = it.ord ? "ol" : "ul", task = it.text.match(/^\[([ xX])\]\s+(.*)$/);
+    const body = task ? `<input type="checkbox" disabled ${task[1] !== " " ? "checked" : ""}> ${mdInline(task[2])}` : mdInline(it.text);
+    const top = st[st.length - 1];
+    if (!top || it.ind > top.ind) { h += `<${t}><li>${body}`; st.push({ ind: it.ind, t }); }
+    else {
+      while (st.length > 1 && it.ind < st[st.length - 1].ind) { h += `</li></${st.pop().t}>`; }
+      h += `</li><li>${body}`;
+    }
+  }
+  while (st.length) h += `</li></${st.pop().t}>`;
+  return h;
+}
+function renderMd(src) {
+  const L = String(src).replace(/\r\n/g, "\n").split("\n");
+  let i = 0, out = "", fm = "";
+  if (L[0] === "---") { const e = L.indexOf("---", 1); if (e > 0) { fm = propsBlock(L.slice(1, e).map((l) => { const k = l.indexOf(":"); return k > 0 ? [l.slice(0, k).trim(), esc(l.slice(k + 1).trim())] : [l, ""]; })); i = e + 1; } }
+  const isBlock = (l) => /^(```|#{1,6}\s|>\s?|\s*([-*+]|\d+[.)])\s+)/.test(l) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(l);
+  const sep = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+  while (i < L.length) {
+    const l = L[i];
+    if (!l.trim()) { i++; continue; }
+    let m;
+    if (/^```/.test(l)) {
+      const lang = l.slice(3).trim(), buf = []; i++;
+      while (i < L.length && !/^```/.test(L[i])) buf.push(L[i++]);
+      i++;
+      out += `<pre class="mcode"${lang ? ` data-lang="${esc(lang)}"` : ""}><code>${esc(buf.join("\n"))}</code></pre>`;
+    } else if ((m = l.match(/^(#{1,6})\s+(.*?)\s*#*$/))) { out += `<h${m[1].length}>${mdInline(m[2])}</h${m[1].length}>`; i++; }
+    else if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { out += "<hr>"; i++; }
+    else if (/^>\s?/.test(l)) { const buf = []; while (i < L.length && /^>\s?/.test(L[i])) buf.push(L[i++].replace(/^>\s?/, "")); out += `<blockquote>${renderMd(buf.join("\n"))}</blockquote>`; }
+    else if (l.includes("|") && i + 1 < L.length && sep.test(L[i + 1]) && L[i + 1].includes("-")) {
+      const cells = (r) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+      const head = cells(l); i += 2; const rows = [];
+      while (i < L.length && L[i].trim() && L[i].includes("|")) rows.push(cells(L[i++]));
+      out += `<div class="tbl"><table><thead><tr>${head.map((c) => `<th>${mdInline(c)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${head.map((_, k) => `<td>${mdInline(r[k] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    } else if (/^\s*([-*+]|\d+[.)])\s+/.test(l)) {
+      const items = [];
+      while (i < L.length) {
+        const mm = L[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+        if (mm) { items.push({ ind: mm[1].replace(/\t/g, "    ").length, ord: /\d/.test(mm[2]), text: mm[3] }); i++; }
+        else if (L[i].trim() && /^\s+\S/.test(L[i]) && items.length) { items[items.length - 1].text += " " + L[i].trim(); i++; }
+        else break;
+      }
+      out += mdList(items);
+    } else {
+      const buf = [l]; i++;
+      while (i < L.length && L[i].trim() && !isBlock(L[i]) && !(L[i].includes("|") && i + 1 < L.length && sep.test(L[i + 1]))) buf.push(L[i++]);
+      out += `<p>${mdInline(buf.join("\n")).replace(/\n/g, " ")}</p>`;
+    }
+  }
+  return fm + out;
+}
+function propsBlock(rows) {
+  return `<div class="fm"><div class="fm-h">Properties</div><div class="fm-g">${rows.filter((r) => r && r[1] !== "" && r[1] != null).map(([k, v]) => `<span class="k">${esc(k)}</span><span class="v">${v}</span>`).join("")}</div></div>`;
+}
+
+// ---------- JSON tree ----------
+function jt(v, key, depth) {
+  const k = key != null ? `<span class="jk">${esc(key)}</span><span class="jp">: </span>` : "";
+  if (v === null) return `<div class="jl">${k}<span class="jb">null</span></div>`;
+  if (typeof v === "string") return `<div class="jl">${k}<span class="js">"${esc(v.length > 700 ? v.slice(0, 700) + `… (+${v.length - 700} chars)` : v)}"</span></div>`;
+  if (typeof v === "number") return `<div class="jl">${k}<span class="jn">${v}</span></div>`;
+  if (typeof v === "boolean") return `<div class="jl">${k}<span class="jb">${v}</span></div>`;
+  const arr = Array.isArray(v), ent = arr ? v.map((x, i) => [i, x]) : Object.entries(v), [o, c] = arr ? ["[", "]"] : ["{", "}"];
+  if (!ent.length) return `<div class="jl">${k}<span class="jp">${o}${c}</span></div>`;
+  const shown = ent.slice(0, 300);
+  return `<details class="jd" ${depth < 2 ? "open" : ""}><summary>${k}<span class="jp">${o}</span><span class="jc"> ${ent.length} ${arr ? "items" : "keys"}</span></summary><div class="jkids">${shown.map(([kk, x]) => jt(x, arr ? null : kk, depth + 1)).join("")}${ent.length > 300 ? `<div class="jl jc">… ${ent.length - 300} more</div>` : ""}</div><div class="jl jp">${c}</div></details>`;
+}
+
+// ---------- vault note viewer ----------
+S.vmode = {};
+function crumbs(path) {
+  const parts = [S.vault.root, ...path.split("/")];
+  return `<div class="crumbs">${parts.map((p, i) => `<span class="${i === parts.length - 1 ? "cur" : ""}">${esc(p)}</span>`).join('<i>›</i>')}</div>`;
+}
+function noteBar(path, d, modes) {
+  const cur = S.vmode[path] || modes[0][0];
+  return `<div class="notebar">${crumbs(path)}<div class="nb-actions">${modes.length > 1 ? `<div class="seg">${modes.map(([k, lab]) => `<button class="${k === cur ? "on" : ""}" data-act="mode" data-path="${esc(path)}" data-mode="${k}">${lab}</button>`).join("")}</div>` : ""}
+    <button class="btn ghost sm" data-act="reveal" data-path="${esc(path)}" title="Show in Windows Explorer">Reveal in Explorer</button>
+    <button class="btn ghost sm" data-act="copy" data-path="${esc(d.abs)}">Copy path</button></div></div>`;
+}
+const sessByMeta = (path) => { const f = path.replace(/^sessions\//, ""); return S.sessions.find((s) => s.meta_file === f); };
+const sessByRaw = (path) => { const f = path.replace(/^sessions\//, ""); return S.sessions.find((s) => s.raw_record === f); };
+
+async function vVault(v, path) {
+  const d = await cget("/api/vault/file?path=" + encodeURIComponent(path));
+  const kind = vkind(path), name = path.split("/").pop();
+  const fileProps = [["Name", esc(name)], ["Size", human(d.size)], ["Type", kind === "md" ? "Markdown note" : kind === "jsonl" ? "stream-json record" : kind === "json" ? "JSON" : "text"]];
+  let side = { linked: [], props: fileProps };
+  if (kind === "md") {
+    const links = new Map();
+    for (const m of d.content.matchAll(/\[\[([^\]\n|]+?)(?:\|[^\]\n]*)?\]\]/g)) { const r = resolveLink(m[1].trim()); if (r) links.set(r.join(":"), r); }
+    const mode = S.vmode[path] || "note";
+    v.innerHTML = `<div class="page wide">${noteBar(path, d, [["note", "Rendered"], ["raw", "Source"]])}${mode === "raw" ? `<pre class="rawbox">${esc(d.content)}</pre>` : `<div class="mdbody">${renderMd(d.content)}</div>`}</div>`;
+    side.linked = [...links.values()].map(([t, id]) => linkItem(t, id, t === "vault" ? id.split("/").pop() : t === "file" ? id.split("/").pop() : id, "links to"));
+    side.props.push(["Wikilinks", links.size], ["Lines", d.content.split("\n").length]);
+  } else if (kind === "json" && /\.meta\.json$/.test(name) && /^sessions\//.test(path)) {
+    let m; try { m = JSON.parse(d.content); } catch (e) { m = null; }
+    if (!m) { v.innerHTML = `<div class="page wide">${noteBar(path, d, [["raw", "Raw JSON"]])}<pre class="rawbox">${esc(d.content)}</pre></div>`; return side; }
+    const s = sessByMeta(path), mode = S.vmode[path] || "note";
+    const sv = s ? await cget("/api/session?id=" + encodeURIComponent(s.id)) : null;
+    const note = mode === "raw" ? `<div class="jtree">${jt(m, null, 0)}</div>` : sessionNote(m, s, sv);
+    v.innerHTML = `<div class="page wide">${noteBar(path, d, [["note", "Note"], ["raw", "Raw JSON"]])}${note}</div>`;
+    const ed = m.files_edited || [], rd = (m.files_read || []).filter((x) => !ed.includes(x));
+    const decs = s ? S.decisions.filter((x) => x.session === s.id) : [];
+    side.linked = [...ed.map((x) => linkItem("file", x, x.split("/").pop(), "edited")), ...rd.map((x) => linkItem("file", x, x.split("/").pop(), "read")),
+      ...decs.map((x) => linkItem("decision", x.id, short(x.text, 34), "decision")),
+      ...(m.raw_record ? [linkItem("vault", "sessions/" + m.raw_record, m.raw_record, "raw record")] : []),
+      ...(s ? [linkItem("session", s.id, `S${sidx[s.id]} session view`, "", s.freshness)] : [])];
+    const u = m.usage || {};
+    side.props = [["Session", `<code>${esc(String(m.session_id || "").slice(0, 8))}</code>`], ["Started", esc(m.started_at || "-")], ["Model", esc(m.model || "-")], ["Status", sv ? tag(sv.freshness.status) : "-"],
+      ["Output tok", fmt(u.output_tokens)], ["Cost", "$" + (u.cost_usd_list || 0).toFixed(4)], ["Files edited", ed.length], ["Files read", rd.length], ["Size", human(d.size)]];
+  } else if (kind === "json") {
+    let j; try { j = JSON.parse(d.content); } catch (e) { j = undefined; }
+    const mode = S.vmode[path] || (j === undefined ? "raw" : "tree");
+    v.innerHTML = `<div class="page wide">${noteBar(path, d, j === undefined ? [["raw", "Raw"]] : [["tree", "Tree"], ["raw", "Raw"]])}${mode === "raw" ? `<pre class="rawbox">${esc(d.content)}</pre>` : `<div class="jtree">${jt(j, null, 0)}</div>`}</div>`;
+    if (j && typeof j === "object") side.props.push([Array.isArray(j) ? "Items" : "Top-level keys", Object.keys(j).length]);
+    if (j && j.files && path === "index/map.json") side.props.push(["Files indexed", Object.keys(j.files).length], ["Engine", esc(j.engine || "")]);
+  } else if (kind === "jsonl") {
+    const mode = S.vmode[path] || "timeline", s = sessByRaw(path);
+    const sv = s ? await cget("/api/session?id=" + encodeURIComponent(s.id)) : null;
+    v.innerHTML = `<div class="page wide">${noteBar(path, d, [["timeline", "Timeline"], ["raw", "Raw"]])}${mode === "raw" ? rawLines(d.content) : jsonlTimeline(d.content, sv ? sv.meta.prompt : "")}</div>`;
+    side.linked = s ? [linkItem("vault", "sessions/" + s.meta_file, s.meta_file, "session note"), linkItem("session", s.id, `S${sidx[s.id]} session view`, "", s.freshness)] : [];
+    side.props.push(["Events", d.content.split("\n").filter(Boolean).length]);
+  } else {
+    v.innerHTML = `<div class="page wide">${noteBar(path, d, [["raw", "Text"]])}<pre class="rawbox">${esc(d.content)}</pre></div>`;
+  }
+  return side;
+}
+
+function sessionNote(m, s, sv) {
+  const u = m.usage || {}, idx = s ? sidx[s.id] : null, calls = m.tool_calls || [];
+  const ed = m.files_edited || [], rd = (m.files_read || []).filter((x) => !ed.includes(x));
+  const status = sv ? sv.freshness.status : null;
+  const props = propsBlock([
+    ["session_id", `<code>${esc(m.session_id || "")}</code>`], ["started", esc(m.started_at || "")], ["model", esc(m.model || "")], ["provider", esc(m.provider || "")],
+    ["capture", esc(m.capture_method || "")], ["tokens", `${fmt(u.input_tokens)} in · ${fmt(u.output_tokens)} out · ${fmt(u.cache_read_tokens)} cache read · ${fmt(u.cache_creation_tokens)} cache write`],
+    ["cost_usd_list", u.cost_usd_list != null ? "$" + u.cost_usd_list.toFixed(4) : ""], ["turns", u.num_turns != null ? `${u.num_turns} · ${((u.duration_ms || 0) / 1000).toFixed(1)}s` : ""],
+    ["freshness", status ? tag(status) : ""], ["raw_record", m.raw_record ? wikiHtml("sessions/" + m.raw_record, m.raw_record) : ""],
+    ["step", esc(m.race_step || m.script_id || "")]]);
+  const fl = (arr, role) => arr.map((f) => `<li>${wikiHtml(f, f)} <span class="dim">${role}</span></li>`).join("");
+  const edits = calls.filter((t) => t.tool === "Edit" || t.tool === "Write");
+  const tl = calls.slice(0, 250).map((t) => {
+    const tgt = t.file ? wikiHtml(t.file, t.file.split("/").pop()) : "";
+    const extra = t.command ? `<code>${esc(short(t.command, 140))}</code>` : t.pattern ? `<code>${esc(short(t.pattern, 80))}</code>` : "";
+    return `<li class="tli"><span class="tl-ico ${esc(t.tool)}">${TOOL_ICO[t.tool] || "▪"}</span><b>${esc(t.tool)}</b> ${tgt} ${extra}<span class="dim ln">L${t.line ?? ""}</span></li>`;
+  }).join("") + (calls.length > 250 ? `<li class="dim">… ${calls.length - 250} more</li>` : "");
+  return `<div class="mdbody"><h1 class="ntitle">${idx ? `Session S${idx}` : "Session"}</h1>${props}
+   <h2>Prompt</h2><div class="quote">${esc(m.prompt || "(empty)")}</div>
+   <h2>Outcome</h2>${m.result_text ? renderMd(m.result_text) : '<p class="dim">(no result text)</p>'}
+   <h2>Files touched</h2>${ed.length || rd.length ? `<ul>${fl(ed, "edited")}${fl(rd, "read")}</ul>` : '<p class="dim">No files recorded.</p>'}
+   <h2>Tool timeline</h2>${calls.length ? `<ul class="tlist">${tl}</ul>` : '<p class="dim">No tool calls recorded.</p>'}
+   <h2>Edits</h2>${edits.length ? edits.slice(0, 60).map((t) => `<h3>${t.file ? wikiHtml(t.file, t.file) : esc(t.tool)} <span class="dim">${esc(t.tool)} · L${t.line ?? ""}</span></h3>${t.tool === "Edit" ? diffHtml(t.old, t.new) : diffHtml("", t.new)}`).join("") : '<p class="dim">No edits.</p>'}
+   ${(m.errors || []).length ? `<h2>Errors</h2><ul>${m.errors.map((x) => `<li class="errli">${esc(short(typeof x === "string" ? x : x.error || JSON.stringify(x), 300))}</li>`).join("")}</ul>` : ""}</div>`;
+}
+
+function rawLines(text) {
+  const ls = text.split("\n").filter(Boolean), cap = 600;
+  return `<div class="codebox raw"><pre>${ls.slice(0, cap).map((l, i) => `<div class="ln"><span class="n">${i + 1}</span><span class="c" style="white-space:pre-wrap;word-break:break-all">${esc(l.length > 3000 ? l.slice(0, 3000) + `… (+${l.length - 3000} chars)` : l)}</span></div>`).join("")}</pre></div>${ls.length > cap ? `<p class="dim">Showing first ${cap} of ${ls.length} lines.</p>` : ""}`;
+}
+function keyInputs(inp) {
+  const keys = ["file_path", "path", "command", "pattern", "description", "url", "prompt", "old_string", "new_string", "content"];
+  const rows = [];
+  for (const k of keys) if (inp && inp[k] != null) rows.push(`<span class="dim">${k}</span> ${k === "old_string" || k === "new_string" || k === "content" ? `<span class="dim">(${String(inp[k]).length} chars)</span>` : `<code>${esc(short(inp[k], 220))}</code>`}`);
+  return rows.slice(0, 5).join('<span class="sepdot">·</span>');
+}
+function resultBlock(c) {
+  const t = Array.isArray(c) ? c.map((x) => x.text || JSON.stringify(x)).join("\n") : typeof c === "string" ? c : JSON.stringify(c, null, 1);
+  const head = t.slice(0, 420);
+  return `<pre class="tres">${esc(head)}${t.length > 420 ? "…" : ""}</pre>${t.length > 420 ? `<details class="more"><summary>Show all (${fmt(t.length)} chars)</summary><pre class="tres">${esc(t.length > 30000 ? t.slice(0, 30000) + "\n… truncated" : t)}</pre></details>` : ""}`;
+}
+function jsonlTimeline(text, prompt) {
+  const ls = text.split("\n").filter(Boolean), names = {};
+  let hidden = 0, h = "", n = 0;
+  const ev = (cls, ico, head, body) => { n++; h += `<div class="tl ${cls}"><span class="ico">${ico}</span><div class="head">${head}</div>${body || ""}</div>`; };
+  if (prompt) ev("user", "U", '<span class="tool">User prompt</span><span class="dim">from session note</span>', `<div class="quote">${esc(prompt)}</div>`);
+  ls.forEach((line, li) => {
+    let e; try { e = JSON.parse(line); } catch (x) { hidden++; return; }
+    const L = `<span class="dim mono" style="margin-left:auto">L${li + 1}</span>`;
+    if (e.type === "system" && e.subtype === "init") ev("sys", "⚙", `<span class="tool">System init</span><span class="muted">${esc(e.model || "")}</span><span class="dim">${(e.tools || []).length} tools · ${esc(e.permissionMode || "")}</span>${L}`, `<div class="cmd">${esc(e.cwd || "")}</div>`);
+    else if (e.type === "system" && e.subtype && e.subtype !== "thinking_tokens") ev("warn", "!", `<span class="tool">${esc(e.subtype.replace(/_/g, " "))}</span>${L}`, `<div class="cmd">${esc(short(JSON.stringify(Object.fromEntries(Object.entries(e).filter(([k]) => !["type", "subtype", "uuid", "session_id"].includes(k)))), 360))}</div>`);
+    else if (e.type === "assistant" && e.message) {
+      for (const b of e.message.content || []) {
+        if (b.type === "text" && b.text) ev("assistant", "●", `<span class="tool">Assistant</span><span class="dim">visible text</span>${L}`, `<div class="atext mdbody">${renderMd(b.text)}</div>`);
+        else if (b.type === "tool_use") { names[b.id] = b.name; ev(b.name, TOOL_ICO[b.name] || "▪", `<span class="tool">${esc(b.name)}</span>${L}`, `<div class="kin">${keyInputs(b.input)}</div>`); }
+        else if (b.type === "thinking") { if (b.thinking) ev("think", "…", `<span class="tool">Thinking</span><span class="dim">provider-emitted summary</span>${L}`, `<details class="more"><summary>Show</summary><pre class="tres">${esc(b.thinking)}</pre></details>`); else hidden++; }
+      }
+    } else if (e.type === "user" && e.message) {
+      const c = e.message.content;
+      if (typeof c === "string") ev("user", "U", `<span class="tool">User</span>${L}`, `<div class="quote">${esc(c)}</div>`);
+      else for (const b of c || []) {
+        if (b.type === "tool_result") ev("res" + (b.is_error ? " err" : ""), "↵", `<span class="tool">Result</span><span class="muted">${esc(names[b.tool_use_id] || "")}</span>${b.is_error ? '<span class="tag stale">error</span>' : ""}${L}`, resultBlock(b.content));
+        else if (b.type === "text") ev("user", "U", `<span class="tool">User</span>${L}`, `<div class="quote">${esc(b.text)}</div>`);
+      }
+    } else if (e.type === "result") {
+      const u = e.usage || {};
+      ev("done", "✓", `<span class="tool">Result</span><span class="tag ${e.is_error ? "stale" : "fresh"}">${esc(e.subtype || "")}</span>${L}`,
+        `<div class="cards sm"><div class="card"><div class="lbl">Cost</div><div class="val g">$${(e.total_cost_usd || 0).toFixed(4)}</div></div><div class="card"><div class="lbl">Output</div><div class="val v">${fmt(u.output_tokens)}</div></div><div class="card"><div class="lbl">Input</div><div class="val">${fmt(u.input_tokens)}</div></div><div class="card"><div class="lbl">Cache read</div><div class="val c">${fmt(u.cache_read_input_tokens)}</div></div><div class="card"><div class="lbl">Turns</div><div class="val">${fmt(e.num_turns)}</div><div class="note">${((e.duration_ms || 0) / 1000).toFixed(1)}s</div></div></div>${e.result ? `<div class="atext mdbody" style="margin-top:8px">${renderMd(e.result)}</div>` : ""}`);
+    } else hidden++;
+  });
+  return `<div class="timeline evs">${h || '<span class="muted">No events.</span>'}</div><p class="dim" style="margin-top:14px">${n} events shown${hidden ? `, ${hidden} housekeeping records hidden (rate limits, thinking-token counters, empty thinking blocks)` : ""}. Reasoning content is shown only when the provider exposed it.</p>`;
+}
+
+// ---------- actions, home, dialogs ----------
+function copyText(t) {
+  return navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject();
+}
+document.addEventListener("click", async (e) => {
+  const a = e.target.closest("[data-act]");
+  if (!a) return;
+  const act = a.dataset.act;
+  if (act === "mode") { S.vmode[a.dataset.path] = a.dataset.mode; render(); }
+  else if (act === "reveal") {
+    try { await post("/api/reveal?path=" + encodeURIComponent(a.dataset.path)); toast("Opened in Explorer", "ok"); } catch (x) { toast("Reveal failed: " + x.message); }
+  } else if (act === "copy") {
+    const t = a.dataset.path;
+    try { await copyText(t); } catch { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+    toast("Path copied", "ok");
+  } else if (act === "switch") showHome();
+});
+$(".brand").addEventListener("click", () => showHome());
+
+function ask(title, body, ok = "OK", cancel = "Cancel") {
+  return new Promise((res) => {
+    const d = $("#dlg");
+    d.innerHTML = `<div class="dlg-box"><h3>${esc(title)}</h3><p>${body}</p><div class="dlg-b"><button class="btn ghost" id="dlg-no">${esc(cancel)}</button><button class="btn" id="dlg-ok">${esc(ok)}</button></div></div>`;
+    d.classList.remove("hidden");
+    const done = (v) => { d.classList.add("hidden"); res(v); };
+    $("#dlg-ok").onclick = () => done(true); $("#dlg-no").onclick = () => done(false); $("#dlg-ok").focus();
+  });
+}
+const ago = (iso) => {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (!(s >= 0)) return "";
+  return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " days ago";
+};
+async function openProject(project, store) {
+  const h = $("#home");
+  h.classList.add("busy");
+  try {
+    let q = `/api/open?project=${encodeURIComponent(project)}${store ? "&store=" + encodeURIComponent(store) : ""}`;
+    let r = await post(q);
+    if (r.needs_scan) {
+      if (!(await ask("No memory store yet", `No memory store found for <code>${esc(r.project)}</code>.<br>Scan the project now to build one? This is deterministic and uses 0 LLM tokens.`, "Scan project"))) return;
+      r = await post(q + "&scan=1");
+    }
+    S.loaded = false; packState.res = null;
+    await loadProject();
+    $("#home").classList.add("hidden");
+    renderVault(); renderTabs(); openTab("overview", "");
+    if (r.scanned) toast("Project scanned and store created", "ok");
+  } catch (e) { toast("Cannot open project: " + e.message); }
+  finally { h.classList.remove("busy"); }
+}
+async function pickProject() {
+  const r = await post("/api/pick?kind=project");
+  if (r.path) openProject(r.path, "");
+}
+async function pickStore() {
+  const r = await post("/api/pick?kind=store");
+  if (!r.path) return;
+  const norm = r.path.replace(/\\/g, "/").replace(/\/$/, "");
+  if (norm.split("/").pop() === ".devmemory") return openProject(norm.split("/").slice(0, -1).join("/"), r.path);
+  if (!(await ask("Which project?", `Store <code>${esc(r.path)}</code> is not inside its project. Pick the project folder it belongs to.`, "Choose project folder"))) return;
+  const p = await post("/api/pick?kind=project");
+  if (p.path) openProject(p.path, r.path);
+}
+async function showHome() {
+  const h = $("#home");
+  h.classList.remove("hidden");
+  if (!h.firstChild) h.innerHTML = spinner();
+  document.title = "DevMemory";
+  let d;
+  try { d = await api("/api/home"); } catch (e) { toast(e.message); return; }
+  const card = (r, ex) => `<div class="hcard ${ex ? "ex" : ""}" data-proj="${esc(r.project)}" data-store="${esc(r.store)}" tabindex="0"><div class="hc-t">${esc(r.name)}</div><div class="hc-d">${esc(r.desc || r.project)}</div>${ex ? `<div class="hc-p mono">${esc(r.project)}</div>` : `<div class="hc-p mono">${esc(r.store)}</div><div class="hc-a">${esc(ago(r.last_opened))}</div>`}</div>`;
+  const cur = d.current.project;
+  h.innerHTML = `<div class="home-in"><div class="home-hero"><span class="logo big"></span><h1>DevMemory</h1><p>Local-first, project-aware memory for AI-assisted development.<br>Browse what was captured, exactly as it sits on disk.</p>
+    <div class="home-btns"><button class="btn lg" id="h-proj">Open project folder…</button><button class="btn ghost lg" id="h-store">Open memory store…</button></div>
+    ${cur ? `<button class="linkbtn" id="h-back">← Back to ${esc(d.current.name)}</button>` : ""}</div>
+    <div class="home-cols"><div><h2>Recent projects</h2>${d.recents.length ? `<div class="hlist">${d.recents.map((r) => card({ ...r, desc: r.project }, false)).join("")}</div>` : '<div class="hempty">Nothing opened yet. Open a project folder or try an example.</div>'}</div>
+    <div><h2>Examples</h2><div class="hlist">${d.examples.filter((x) => x.exists).map((x) => card(x, true)).join("") || '<div class="hempty">Examples not found on disk.</div>'}</div></div></div></div>`;
+  $("#h-proj").onclick = pickProject; $("#h-store").onclick = pickStore;
+  if ($("#h-back")) $("#h-back").onclick = () => { h.classList.add("hidden"); document.title = "DevMemory — " + S.ov.dir_name; };
+}
+$("#home").addEventListener("click", (e) => { const c = e.target.closest("[data-proj]"); if (c) openProject(c.dataset.proj, c.dataset.store); });
+$("#home").addEventListener("keydown", (e) => { const c = e.target.closest("[data-proj]"); if (c && e.key === "Enter") openProject(c.dataset.proj, c.dataset.store); });
+
 // ---------- quick switcher ----------
 const qs = { open: false, sel: 0, res: [] };
 function fuzzy(q, s) {
@@ -494,6 +886,7 @@ function fuzzy(q, s) {
 }
 function qsItems() {
   return [
+    ...vflat().filter((f) => !/^sessions\//.test(f.path) || /\.meta\.json$/.test(f.path)).map((f) => ({ type: "vault", id: f.path, label: f.path })),
     ...S.files.map((f) => ({ type: "file", id: f.path, label: f.path })),
     ...S.sessions.map((s) => ({ type: "session", id: s.id, label: `S${sidx[s.id]} ${short(s.prompt, 80)}` })),
     ...S.decisions.map((d) => ({ type: "decision", id: d.id, label: short(d.text, 90) })),
@@ -519,6 +912,9 @@ $("#qs").addEventListener("mousedown", (e) => { if (e.target.id === "qs") qsTogg
 $("#qs-btn").onclick = () => qsToggle(true);
 
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#dlg").classList.contains("hidden")) { $("#dlg-no") && $("#dlg-no").click(); return; }
+  if (e.key === "Escape" && S.loaded && !qs.open && !$("#home").classList.contains("hidden")) { $("#h-back") && $("#h-back").click(); return; }
+  if (!$("#home").classList.contains("hidden")) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); return qsToggle(!qs.open); }
   if (qs.open) {
     if (e.key === "Escape") qsToggle(false);

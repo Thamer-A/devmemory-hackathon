@@ -28,9 +28,12 @@ def _store(a) -> Path:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="devmem")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("scan", "run", "import", "pack", "status", "hook", "ui"):
+    for name in ("scan", "run", "import", "pack", "status", "hook", "ui", "app"):
         p = sub.add_parser(name)
-        p.add_argument("--project", default=".")
+        p.add_argument("--project", default=None if name == "app" else ".")
+        if name == "app":
+            p.add_argument("--dry-run", action="store_true", help="print the browser command and exit")
+            p.add_argument("--port", type=int, default=0)
         p.add_argument("--store", help="memory store dir (default <project>/.devmemory)")
         if name == "ui":
             p.add_argument("--port", type=int, default=8765)
@@ -48,6 +51,10 @@ def main(argv=None) -> int:
             p.add_argument("--mode", default="full", choices=["full", "static", "nofresh"])
             p.add_argument("--out")
     a = ap.parse_args(argv)
+    if a.cmd == "app":
+        from .app import run_app
+        proj = Path(a.project).resolve() if a.project else None
+        return run_app(proj, Path(a.store) if a.store else None, dry_run=a.dry_run, port=a.port)
     project = Path(a.project).resolve()
 
     if a.cmd == "ui":
