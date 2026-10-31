@@ -7,6 +7,7 @@ in a past Claude Code session. Three variants on identical copies:
   without  - Codex alone (`devmem codex --no-pack`)
   pack     - DevMemory's pack prepended to the prompt
   mcp      - no pack; DevMemory offered as an MCP server for this run (Codex decides whether to call it)
+  mcp_agents - as mcp, plus a one-line AGENTS.md telling the agent to call get_context_pack first
 All runs are captured by DevMemory's tool-agnostic adapter (snapshot diff + `codex exec --json`).
 
 Codex runs with --ignore-user-config (via `devmem codex --isolated`) so personal plugins such as computer
@@ -37,6 +38,10 @@ MEM = Path.home() / "devmem-xtool-mem"
 OUT = HERE / "results"
 
 
+AGENTS_LINE = "This project uses DevMemory. Before starting any task, call the devmemory get_context_pack tool with the user's request.
+"
+
+
 def setup():
     proj = WORK / uuid.uuid4().hex[:8] / "project"
     proj.mkdir(parents=True)
@@ -61,8 +66,10 @@ def check(proj):
 
 def run(variant, rep):
     proj, store = setup()
+    if variant == "mcp_agents":
+        (proj / "AGENTS.md").write_text(AGENTS_LINE, encoding="utf-8")
     cmd = [sys.executable, "-m", "devmem.cli", "codex", TASK, "--project", str(proj), "--store", str(store), "--model", MODEL, "--isolated"]
-    cmd += {"without": ["--no-pack"], "pack": [], "mcp": ["--mcp"]}[variant]
+    cmd += {"without": ["--no-pack"], "pack": [], "mcp": ["--mcp"], "mcp_agents": ["--mcp"]}[variant]
     p = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
     ok, line = check(proj)
     meta = sorted((store / "sessions").glob("*.meta.json"))[-1]
@@ -90,7 +97,7 @@ def run(variant, rep):
 
 
 if __name__ == "__main__":
-    variants = [a for a in sys.argv[1:] if a in ("without", "pack", "mcp")] or ["without", "pack", "mcp"]
+    variants = [a for a in sys.argv[1:] if a in ("without", "pack", "mcp", "mcp_agents")] or ["without", "pack", "mcp"]
     reps = int(sys.argv[sys.argv.index("--repeats") + 1]) if "--repeats" in sys.argv else 1
     OUT.mkdir(exist_ok=True)
     for rep in range(reps):
