@@ -11,3 +11,4 @@ docs/deck/node_modules
 demo/taskboard/*/data/
 demo/taskboard/*/_server.log
 demo/taskboard/.chrome/
+demo/footage/
