@@ -31,6 +31,7 @@ const DATA = {
     { k: "Features (of 10)", v: ["7", "9", "9"] },
   ],
   scripted: { dm: "0.61M", others: "1.06M / 1.20M" },
+  crossTool: "Claude Code memory: Codex right 3/3 vs 0/3, 56% fewer tokens",
   footer: "Repo: DevMemory (source, benchmark, results) · RESULTS.md · bench/METHODOLOGY.md",
 };
 
@@ -143,9 +144,9 @@ function barChart(s, x, y, w, h, ttl, labels, values, hiIdx, fmt, max, extra = {
   title(s, "Scan, capture, pack, deliver");
   const steps = [
     ["1", "Scan", "Deterministic project map. 0 LLM tokens, ~25 ms.", VIO],
-    ["2", "Capture", "Every session via Claude Code's documented stream-json / hooks: prompts, tool calls, edits, file hashes.", CY],
+    ["2", "Capture", "Every session, from any AI tool: Claude Code stream-json, Codex JSON events, or a project snapshot diff. Prompts, edits, file hashes.", CY],
     ["3", "Pack", "Task-specific context: original requirements verbatim, the session where a feature was first asked for, files with evidence lines, STALE flags.", GRN],
-    ["4", "Deliver", "Claude Code hook or --append-system-prompt. About 1k tokens.", WARN],
+    ["4", "Deliver", "Claude Code hook, an MCP server for any client, or the pack in any agent's prompt. About 1k tokens.", WARN],
   ];
   steps.forEach((st, i) => {
     const x = 0.5 + i * 2.3;
@@ -157,7 +158,7 @@ function barChart(s, x, y, w, h, ttl, labels, values, hiIdx, fmt, max, extra = {
     if (i < 3) T(s, "›", { x: x + 2.08, y: 2.5, w: 0.24, h: 0.5, fontSize: 24, color: MUT, align: "center", valign: "middle", objectName: "Arrow " + (i + 1) });
   });
   T(s, DATA.tagline, { x: 0.5, y: 4.6, w: 9, h: 0.6, fontSize: 24, bold: true, italic: true, color: VIO, align: "center", valign: "middle", objectName: "Tagline" });
-  s.addNotes("The pipeline is four steps. A deterministic scan builds a project map with no model calls, capture records each session from documented Claude Code interfaces, a pack selects only what the next task needs, and delivery injects roughly 1k tokens. The principle is to keep the full archive but send only what earns its tokens.");
+  s.addNotes("The pipeline is four steps. A deterministic scan builds a project map with no model calls, capture records each session through documented interfaces of any AI tool, a pack selects only what the next task needs, and delivery injects roughly 1k tokens through a hook, an MCP server or the prompt. The principle is to keep the full archive but send only what earns its tokens.");
 }
 
 // ============ 4 Pack ============
@@ -191,11 +192,11 @@ function barChart(s, x, y, w, h, ttl, labels, values, hiIdx, fmt, max, extra = {
   panel(s, 6.05, 1.2, 3.45, 3.9, "Built list panel");
   s.addText(richBullets([
     ["CLI:", "scan / run / pack / status / hook / app"],
+    ["Any AI tool:", "MCP server, Codex adapter, capture for any CLI or IDE agent"],
     ["Desktop app:", "browse the memory vault"],
-    ["Roblox Studio MCP:", "automated playtests"],
-    ["Benchmark harness:", "runner, graders, reports, regrade"],
+    ["Benchmark harness:", "graders, reports, Roblox Studio playtests"],
   ], 15), { x: 6.25, y: 1.4, w: 3.05, h: 3.5, margin: 0, valign: "top", fontFace: "Calibri", isTextBox: true, objectName: "Built list" });
-  s.addNotes("Four pieces were built. A CLI drives scan, run, pack, status, hook and app; a desktop app shows the memory as an Obsidian-style vault; a Roblox Studio MCP integration runs automated playtests; and a benchmark harness with graders and regrading produces the numbers in this deck.");
+  s.addNotes("Four pieces were built. A CLI drives scan, run, pack, status, hook and app; an MCP server and adapters let any AI tool use and add to the memory; a desktop app shows it as an Obsidian-style vault; and a benchmark harness with graders and Roblox Studio playtests produces the numbers in this deck.");
 }
 
 // ============ 6 How we tested ============
@@ -273,19 +274,20 @@ function barChart(s, x, y, w, h, ttl, labels, values, hiIdx, fmt, max, extra = {
   const tk = [
     ["Cheaper model + memory", "beat a bigger model without it", VIO],
     ["~Half the tokens", "over multi-session work", CY],
+    ["Works across tools", DATA.crossTool, WARN],
     ["The user's own words", "are what make memory useful", GRN],
   ];
   tk.forEach((t, i) => {
-    const x = 0.5 + i * 3.05;
-    panel(s, x, 1.2, 2.85, 1.55, "Takeaway card " + (i + 1));
-    T(s, t[0], { x: x + 0.2, y: 1.3, w: 2.45, h: 0.7, fontSize: 20, bold: true, color: t[2], valign: "middle", objectName: "Takeaway " + (i + 1) });
-    T(s, t[1], { x: x + 0.2, y: 2.05, w: 2.45, h: 0.6, fontSize: 14, color: TXT, valign: "top", objectName: "Takeaway text " + (i + 1) });
+    const x = 0.5 + i * 2.29;
+    panel(s, x, 1.2, 2.13, 1.6, "Takeaway card " + (i + 1));
+    T(s, t[0], { x: x + 0.15, y: 1.28, w: 1.85, h: 0.7, fontSize: 17, bold: true, color: t[2], valign: "middle", objectName: "Takeaway " + (i + 1) });
+    T(s, t[1], { x: x + 0.15, y: 2.0, w: 1.85, h: 0.75, fontSize: 12, color: TXT, valign: "top", objectName: "Takeaway text " + (i + 1) });
   });
   T(s, "Next", { x: 0.5, y: 3.0, w: 2, h: 0.35, fontSize: 18, bold: true, color: TXT, objectName: "Next head" });
-  s.addText(bullets(["Claude Code plugin: one-command install", "Hook-based capture for interactive sessions", "Studio playtest gate in the loop", "More engines"], 14), { x: 0.5, y: 3.4, w: 5.0, h: 1.5, margin: 0, valign: "top", fontFace: "Calibri", isTextBox: true, objectName: "Next list" });
+  s.addText(bullets(["Claude Code plugin: one-command install", "Test the MCP server in Cursor and VS Code", "Studio playtest gate in the loop", "More engines"], 14), { x: 0.5, y: 3.4, w: 5.0, h: 1.5, margin: 0, valign: "top", fontFace: "Calibri", isTextBox: true, objectName: "Next list" });
   shot(s, "ref", 5.8, 3.0, 3.7, 1.5, "Blade Swarm showcase game");
   T(s, DATA.footer, { x: 0.5, y: 5.05, w: 8.6, h: 0.3, fontSize: 11, color: MUT, objectName: "Footer" });
-  s.addNotes("Three takeaways: a cheaper model with memory beat a bigger model without it, memory roughly halved tokens over multi-session work, and preserving the user's own words is what makes memory useful. Next steps are a one-command Claude Code plugin, hook-based capture for interactive sessions, a Studio playtest gate in the loop, and more engines.");
+  s.addNotes("Four takeaways: a cheaper model with memory beat a bigger model without it; memory roughly halved tokens over multi-session work; memory recorded in Claude Code let Codex solve a task it could not solve alone, 3 of 3 against 0 of 3, with 56% fewer input tokens; and preserving the user's own words is what makes memory useful. Next steps are a one-command Claude Code plugin, testing the MCP server in Cursor and VS Code, a Studio playtest gate in the loop, and more engines.");
 }
 
 (async () => {

@@ -18,6 +18,10 @@ All numbers come from logged runs in `results/`. Cost is the Claude Code CLI's `
 | **C3 DevMemory** | **86% (71–94)** | **yes** | **$0.0087** | 150k |
 | Sonnet, bare / CLAUDE.md | 75% / 75% | no | $0.092 / $0.105 | 70k / 80k |
 
+- **Re-run with the shipped code.** The numbers above use the code as it was when the set was frozen. Retrieval changed afterwards (the web-race fix in section 4). That fix was tuned only on the web race, so these 12 tasks were still unseen by it. DevMemory (C3) was re-run once on the same 12 tasks × 3 repeats with the current code (`results/heldout_v2_report.md`):
+  - **30/36 = 83% (68–92)**, versus 31/36 before. It is still above the 80% floor and still the only condition above it.
+  - **$/success $0.0099** (was $0.0087). Input tokens per run were 181k (was 150k): packs grew by about 300 tokens because of the verbatim-requirement section.
+  - Per task, one dropped from 3/3 to 1/3 and one rose from 0/3 to 1/3. The developer did not inspect the failures, so the held-out tasks stay unread.
 - **Per project:**
   - Roblox P1: C3 12/12 vs C0 9/12, C1 6/12, C2 9/12.
   - Python P2: C3 19/24 vs C1 **20/24**, C0 15/24, C2 14/24. On P2 the hand-written file was slightly better.
@@ -66,6 +70,27 @@ From `results/webrace_taskboard.jsonl`.
   | **DevMemory** | **$0.74** | **580k** (−8% vs AGENTS.md, −32% vs none) |
 
   Round 2 produced no bug reports, so it did not exercise the new lineage retrieval. That fix was verified offline instead: on round 1's exact failing case, the pack now carries the original labels request with its colors. The modest edge here reflects a short project where every feature worked the first time.
+
+## 5. Memory across tools: recorded in Claude Code, used by Codex
+From `demo/cross-tool/RESULTS.md`. The task board's 8 Claude Code sessions were given to Codex CLI (`gpt-5.6-luna`).
+- **Setup:** a regression replaced the label colors. The task was "put the label colors back to exactly what I originally asked for".
+- **Isolation:** each run used a fresh folder outside the repo, with the user's Codex config ignored. 3 runs per variant.
+
+| Codex variant | Exactly right | Mean input tokens | Called DevMemory |
+|---|---|---|---|
+| No memory | 0/3 (guessed) | 153k | n/a |
+| **DevMemory pack in the prompt** | **3/3** | **68k** | n/a |
+| DevMemory MCP server, optional | 0/3 | 138k | 0/3 |
+| DevMemory MCP + one-line AGENTS.md | 3/3 | 138k | 3/3 |
+
+- **An optional tool is not enough:** the agent did not think to call it. Pushing the pack was both the most accurate and the cheapest.
+- **Earlier attempts not counted,** each kept with a README in `demo/cross-tool/results/`:
+  - the model was unavailable;
+  - the no-memory run found a sibling copy of the app by searching parent folders;
+  - the user's personal plugins were loaded, including computer use;
+  - the workspace was read-only;
+  - token usage was missing.
+- This is a case study: n = 3 per variant, on one task.
 
 ## Headline
 Across the fixed held-out benchmark, DevMemory was the only condition above the accuracy floor, with the lowest cost per successful task. In multi-session building it used roughly half the input tokens of the alternatives. It is not universally better:
