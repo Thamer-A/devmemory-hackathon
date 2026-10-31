@@ -1,4 +1,4 @@
-# Voice-over: read aloud (about 2:30)
+# Voice-over: read aloud (about 2:20)
 
 Pause about one second at each line marked (pause).
 
@@ -12,39 +12,37 @@ It forgets what you decided, and what you asked for.
 
 **2. Input**
 
-Here's a real test from our benchmark, on a Roblox game.
+This is Blade Swarm, a Roblox game we built entirely by prompting, one fresh AI session at a time. DevMemory recorded every session.
 
-In an earlier session, the developer planned a daily login reward: twenty coins, plus ten per streak day, capped at seven days. No code yet, just the plan.
+In session eight, the user picked the rarity colors: common gray, rare blue, epic purple.
 
-Days later, a brand-new session gets one line: add the daily reward payout, from the plan we made.
+The next session is brand new. It gets: add an epic upgrade called Twin Spin, and make sure it shows up with the rarity colors we picked.
 
 *(pause)*
 
 **3. AI in action**
 
-A fresh session has never seen that plan. DevMemory has.
+That new session has never seen session eight. DevMemory has.
 
-It scanned the game with zero AI tokens, and it recorded every earlier session.
-
-For this request it builds a small pack: the planning session, word for word, plus the rules this codebase already follows, like "coins only go through the currency service".
+Before it starts, DevMemory builds a pack of about a thousand tokens, with no AI calls at all: the session where the shop was designed, and the session where the colors were picked, word for word, plus where the code keeps them.
 
 *(pause)*
 
 **4. Output**
 
-Without memory, the model guessed. It invented a fifty-coin reward, and failed three times out of three. So did a bigger model, and so did a hand-written project file.
+The session goes straight to the shop config, and Twin Spin arrives as an epic upgrade, in the colors the user chose.
 
-With DevMemory, it followed the plan exactly, three times out of three, at the same cost.
+We built this same game three ways, sixteen sessions each: with nothing, with a hand-kept AGENTS file, and with DevMemory.
+
+All three are playable. DevMemory used about half the input tokens, at the lowest cost.
 
 *(pause)*
 
 **5. Value and the wider testing**
 
-We then built a whole Roblox game three ways, sixteen sessions each. All three were playable, but DevMemory used about half the input tokens.
+We also tested it on 28 unseen benchmark tasks, frozen before any run. DevMemory was the only setup above our 80% accuracy bar, scoring 98% on the latest set, at the lowest cost per success.
 
-Across 28 unseen tasks, frozen before any run, it was the only setup above our 80% accuracy bar. On the latest set it scored 98%, at the lowest cost per success, and on the Roblox tasks it went 36 for 36.
-
-We also raced it on a web app, and shared its memory between Claude Code and Codex. The details are in our results.
+And we raced it on a web app, and shared its memory between Claude Code and Codex. The details are in our results.
 
 *(pause)*
 

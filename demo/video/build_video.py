@@ -18,19 +18,21 @@ FONT_R = "C\\:/Windows/Fonts/calibri.ttf"
 BG, VIO, CY, GRN, WARN, TXT, MUT = "0x0F1115", "0x8B7CF6", "0x38D6E8", "0x3DD68C", "0xF5A524", "0xEDEDED", "0x9AA0AA"
 GAME_CROP = "crop=1910:768:5:218"  # Studio game view inside the maximized 1920x1094 window
 CLIPS = {"none": "none_2.mp4", "agentsmd": "agentsmd_2.mp4", "devmemory": "devmemory_1.mp4"}
-DUR = {"hook": 13, "input": 27, "action": 32, "output": 30, "race": 22, "heldout": 16, "also": 9, "close": 12}
+DUR = {"hook": 12, "input": 28, "action": 28, "output": 20, "race": 22, "heldout": 16, "also": 9, "close": 12}
 MONO = "C\\:/Windows/Fonts/consola.ttf"
 SHOTS = REPO / "docs" / "app-screens"
 
 
 def esc(t):
-    return t.replace("\\", "\\\\").replace(":", "\\:").replace("'", "’").replace(",", "\\,").replace("%", "\\%")
+    lead = len(t) - len(t.lstrip(" "))
+    t = " " * lead + t[lead:]  # drawtext strips leading spaces; keep code indentation
+    return t.replace("\\", "\\\\").replace(":", "\\:").replace("'", "’").replace(",", "\\,")
 
 
 def text(t, x, y, size, color=TXT, font=FONT, start=0.0, fade=0.5, box=False):
     alpha = f"if(lt(t\\,{start})\\,0\\,min(1\\,(t-{start})/{fade}))"
     b = ":box=1:boxcolor=0x0F1115@0.72:boxborderw=18" if box else ""
-    return (f"drawtext=fontfile='{font}':text='{esc(t)}':x={x}:y={y}:fontsize={size}:fontcolor={color}"
+    return (f"drawtext=fontfile='{font}':expansion=none:text='{esc(t)}':x={x}:y={y}:fontsize={size}:fontcolor={color}"
             f":alpha='{alpha}'{b}")
 
 
@@ -165,6 +167,61 @@ def seg_also(d, out):
           ("Every number, method and disclosure: RESULTS.md in the repository", 700, 34, MUT, FONT_R, 2.6)], d, out)
 
 
+# ---- Blade Swarm test case: race prompt R6 in the DevMemory build ----
+def seg_input_bs(d, out):
+    a, b, c = OUT / "_bin_a.mp4", OUT / "_bin_b.mp4", OUT / "_bin_c.mp4"
+    d1 = round(d * 0.3, 2); d2 = round(d * 0.33, 2); d3 = round(d - d1 - d2, 2)
+    shot("bs_session_R5.png", "1600:900:0:0", d1, a, [("Blade Swarm: every AI session, recorded by DevMemory", 0.4)])
+    shot("bs_session_R5.png", "1025:577:300:90", d2, b,
+         [("Session 8: the user picks the rarity colors", 0.4)], box=(34, 192, 958, 64, 1.5))
+    card([("The next session is brand new. It gets:", 300, 46, MUT, FONT_R, 0.2),
+          ("\"Add an Epic upgrade called Twin Spin: +2 blades for 120 coins.", 430, 52, TXT, FONT, 0.8),
+          ("Make sure it shows up with the rarity colors we picked.\"", 500, 52, GRN, FONT, 1.6),
+          ("It has never seen session 8.", 660, 46, WARN, FONT, 3.5)], d3, c)
+    concat([a, b, c], out)
+
+
+def seg_action_bs(d, out):
+    """Actual pack delivered for R6: results/raw/adaptive_blade_devmemory_r1/P9-R6.pack.md (excerpt)."""
+    X = 150
+    lines = [("DevMemory builds a pack for this request  ·  0 AI tokens  ·  actual pack, excerpt", 90, 40, TXT, FONT, 0.2),
+             ("# DevMemory context pack      Project: roblox (rojo)", 195, 27, CY, MONO, 0.8, X),
+             ("## Conventions (observed in code)", 250, 27, VIO, MONO, 1.4, X),
+             ("- Tunables live in src/shared/Config.lua (51 keys, used by 8 files)", 292, 25, TXT, MONO, 1.8, X),
+             ("- Instance.new(\"RemoteEvent\") occurs only in src/shared/Remotes.lua", 330, 25, TXT, MONO, 2.2, X),
+             ("## Relevant past sessions", 395, 27, VIO, MONO, 3.5, X),
+             ("- [session dbf18bb2]  User asked: \"Now the upgrade shop ... +1 Blade (Rare, 60 coins),", 437, 25, TXT, MONO, 4.0, X),
+             ("  Sharper Blades (Common, 30) ... Greed +25% coins (Rare, 50) ...\"", 475, 25, TXT, MONO, 4.4, X),
+             ("- [session 3e2bb0e2]  User asked: \"The UI is ugly. Make a proper HUD and shop UI ...", 530, 25, TXT, MONO, 5.6, X),
+             ("  rarity colors Common = gray, Rare = blue, Epic = purple ...\"", 568, 25, GRN, MONO, 6.2, X),
+             ("  Outcome: \"... The colors live in a new Config.Ui table in src/shared/Config.lua\"", 606, 25, GRN, MONO, 7.0, X),
+             ("## Relevant files", 670, 27, VIO, MONO, 8.5, X),
+             ("- src/server/Shop.lua [164 lines]   - src/shared/Config.lua [73 lines]", 712, 25, TXT, MONO, 8.9, X),
+             ("~970 tokens: both earlier decisions, word for word, and where the code keeps them.", 880, 42, CY, FONT, 11.0)]
+    card(lines, d, out, panels=[(110, 165, 1700, 600, "0x5A606B")])
+
+
+def seg_output_bs(d, out):
+    a, b = OUT / "_bout_a.mp4", OUT / "_bout_b.mp4"
+    d1 = round(d * 0.55, 2); d2 = round(d - d1, 2)
+    X = 220
+    card([("The result, in the DevMemory build:  src/shared/Config.lua", 120, 42, TXT, FONT, 0.2),
+          ("Rarity = {", 250, 30, TXT, MONO, 0.8, X),
+          ("    Common = Color3.fromRGB(150, 156, 170),", 300, 30, TXT, MONO, 1.2, X),
+          ("    Rare   = Color3.fromRGB(70, 140, 255),", 350, 30, TXT, MONO, 1.4, X),
+          ("    Epic   = Color3.fromRGB(170, 90, 240),", 400, 30, TXT, MONO, 1.6, X),
+          ("},", 450, 30, TXT, MONO, 1.6, X),
+          ("gray", 300, 30, MUT, FONT, 2.0, 1300), ("blue", 350, 30, "0x468CFF", FONT, 2.2, 1300),
+          ("purple", 400, 30, "0xAA5AF0", FONT, 2.4, 1300),
+          ("{ Id = \"TwinSpin\", Name = \"Twin Spin\", Rarity = \"Epic\", Cost = 120, Amount = 2 },", 560, 28, GRN, MONO, 3.5, X),
+          ("Twin Spin arrives as an Epic upgrade, in the colors the user chose.", 760, 44, CY, FONT, 5.0)],
+         d1, a, panels=[(180, 220, 1560, 410, VIO)])
+    v = (f"[0:v]{GAME_CROP},crop=1365:768:272:0,scale=1920:1080,setsar=1,"
+         f"{text('The DevMemory build: shop cards in the chosen rarity colors', '(w-text_w)/2', 'h-140', 48, start=0.3, box=True)}[v]")
+    run(["-ss", "19", "-t", str(d2), "-i", FOOT / CLIPS["devmemory"], "-filter_complex", v, "-map", "[v]", *enc(b)])
+    concat([a, b], out)
+
+
 def seg_input(d, out):
     a, b, c = OUT / "_in_a.mp4", OUT / "_in_b.mp4", OUT / "_in_c.mp4"
     d1 = round(d * 0.46, 2); d2 = round(d * 0.2, 2); d3 = round(d - d1 - d2, 2)
@@ -214,7 +271,7 @@ def seg_race(d, out):
         x = 30 + i * 630
         fc.append(f"[{cur}][p{i}]overlay={x}:250[o{i}]")
         cur = f"o{i}"
-    draws = [text("Then: the same Roblox game built three ways, 16 fresh sessions each", "(w-text_w)/2", 70, 48)]
+    draws = [text("The same game, built three ways: 16 fresh sessions each", "(w-text_w)/2", 70, 48)]
     for i, (k, title, tok, cost, col) in enumerate(names):
         cx = 30 + i * 630 + 300
         draws.append(text(title, f"{cx}-text_w/2", 185, 42, color=col if k == "devmemory" else TXT))
@@ -264,7 +321,7 @@ def main():
     if tf.exists():
         DUR.update(json.loads(tf.read_text(encoding="utf-8")))
     parts = []
-    for name, fn in [("hook", seg_hook), ("input", seg_input_roblox), ("action", seg_action_roblox), ("output", seg_code),
+    for name, fn in [("hook", seg_hook), ("input", seg_input_bs), ("action", seg_action_bs), ("output", seg_output_bs),
                      ("race", seg_race), ("heldout", lambda d, o: seg_slide(7, d, o)), ("also", seg_also),
                      ("close", seg_close)]:
         p = OUT / f"{len(parts):02d}_{name}.mp4"
