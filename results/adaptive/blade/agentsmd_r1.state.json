@@ -1,0 +1,162 @@
+{
+ "race": "blade",
+ "condition": "agentsmd",
+ "tag": "r1",
+ "prompts": 16,
+ "features": 9,
+ "awaiting_playtest": false,
+ "last_checks": {
+  "no_errors": true,
+  "blades_render": true,
+  "zombies_spawn": true,
+  "zombies_chase": true,
+  "kills_and_coins": true,
+  "waves_advance": false,
+  "player_damaged": true,
+  "shop_offers": false,
+  "hud_visible": false,
+  "game_over_reset": true,
+  "damage_numbers": true,
+  "map_dressed": true,
+  "zombies_look": false
+ },
+ "last_errors": [],
+ "done": false,
+ "history": [
+  {
+   "step": "P1-R1",
+   "kind": "feature",
+   "cost": 0.15647909999999998,
+   "tok": 85715,
+   "failed": []
+  },
+  {
+   "step": "P2-R2",
+   "kind": "feature",
+   "cost": 0.14896700000000002,
+   "tok": 92224,
+   "failed": []
+  },
+  {
+   "step": "P3-R3",
+   "kind": "feature",
+   "cost": 0.0721482,
+   "tok": 39624,
+   "failed": []
+  },
+  {
+   "step": "P4-R4",
+   "kind": "feature",
+   "cost": 0.28116009999999997,
+   "tok": 292421,
+   "failed": []
+  },
+  {
+   "step": "P5-R5",
+   "kind": "feature",
+   "cost": 0.2792153,
+   "tok": 290487,
+   "failed": []
+  },
+  {
+   "step": "P6-R6",
+   "kind": "feature",
+   "cost": 0.0456443,
+   "tok": 64462,
+   "failed": []
+  },
+  {
+   "step": "P7-R7",
+   "kind": "feature",
+   "cost": 0.1020633,
+   "tok": 70808,
+   "failed": [
+    "player_damaged"
+   ]
+  },
+  {
+   "step": "P8-fix",
+   "kind": "fix",
+   "cost": 0.12527110000000002,
+   "tok": 147695,
+   "failed": [
+    "player_damaged"
+   ]
+  },
+  {
+   "step": "P9-fix",
+   "kind": "fix",
+   "cost": 0.10211579999999999,
+   "tok": 120461,
+   "failed": [
+    "waves_advance",
+    "shop_offers",
+    "hud_visible"
+   ]
+  },
+  {
+   "step": "P10-fix",
+   "kind": "fix",
+   "cost": 0.2720298,
+   "tok": 401743,
+   "failed": []
+  },
+  {
+   "step": "P11-R8",
+   "kind": "feature",
+   "cost": 0.20797739999999998,
+   "tok": 196062,
+   "failed": [
+    "shop_offers",
+    "hud_visible"
+   ]
+  },
+  {
+   "step": "P12-fix",
+   "kind": "fix",
+   "cost": 0.2807451999999999,
+   "tok": 524186,
+   "failed": [
+    "kills_and_coins",
+    "game_over_reset"
+   ]
+  },
+  {
+   "step": "P13-fix",
+   "kind": "fix",
+   "cost": 0.24778869999999997,
+   "tok": 471492,
+   "failed": [
+    "game_over_reset"
+   ]
+  },
+  {
+   "step": "P14-fix",
+   "kind": "fix",
+   "cost": 0.1437924,
+   "tok": 163456,
+   "failed": []
+  },
+  {
+   "step": "P15-R9",
+   "kind": "feature",
+   "cost": 0.2280028,
+   "tok": 191335,
+   "failed": [
+    "kills_and_coins"
+   ]
+  },
+  {
+   "step": "P16-fix",
+   "kind": "fix",
+   "cost": 0.1864661,
+   "tok": 258824,
+   "failed": [
+    "waves_advance",
+    "shop_offers",
+    "hud_visible"
+   ]
+  }
+ ],
+ "last_warnings": []
+}
