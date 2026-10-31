@@ -40,5 +40,5 @@ We built a Roblox game, Blade Swarm, entirely by prompting, with every feature d
 Python (standard library only), Claude Code headless CLI, Codex CLI, MCP, Roblox Studio and its MCP server, Rojo, headless Chrome, ffmpeg and pptxgenjs.
 
 ## Links
-- **Source code:** github.com/Thamer-A/devmemory-hackathon (private; the source zip is also attached).
+- **Source code:** https://github.com/Thamer-A/devmemory-hackathon (public; the source zip is also attached).
 - **Key documents:** `README.md`, `RESULTS.md`, `bench/METHODOLOGY.md` and `docs/ANY_TOOL.md`.

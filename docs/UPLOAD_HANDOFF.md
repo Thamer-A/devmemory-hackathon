@@ -18,7 +18,7 @@ Your job:
    - Demo video: DevMemory_demo.mp4 (2:31)
    - Source code: DevMemory_source.zip
 4. **Don't submit or publish.** Save as a draft if there's a save button, then stop and show me a summary of what you filled in.
-5. **The repository link is private.** If there is a field for it, use github.com/Thamer-A/devmemory-hackathon, but tell me it's private. I'll decide whether to make it public.
+5. **Repository / demo link:** if there is a field for it, use https://github.com/Thamer-A/devmemory-hackathon (public).
 
 ## CONTENT
 
@@ -62,5 +62,5 @@ We built a Roblox game, Blade Swarm, entirely by prompting, with every feature d
 Python (standard library only), Claude Code headless CLI, Codex CLI, MCP, Roblox Studio and its MCP server, Rojo, headless Chrome, ffmpeg and pptxgenjs.
 
 ## Links
-- **Source code:** github.com/Thamer-A/devmemory-hackathon (private; the source zip is also attached).
+- **Source code:** https://github.com/Thamer-A/devmemory-hackathon (public; the source zip is also attached).
 - **Key documents:** `README.md`, `RESULTS.md`, `bench/METHODOLOGY.md` and `docs/ANY_TOOL.md`.
